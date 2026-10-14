@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yuppentek Street Fighter - Underground Boxing Arena</title>
+    <title>TKJ I Street Fighter - Class Boxing Arena</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -122,7 +122,7 @@
                 </div>
                 <div>
                     <h1 class="font-action text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-streetRed via-yellow-400 to-amber-500 tracking-wider">
-                        YUPPENTEK STREET FIGHTER
+                        TKJ I STREET FIGHTER
                     </h1>
                     <p class="text-xs font-arcade text-gray-400 tracking-widest uppercase">Underground Boxing League</p>
                 </div>
@@ -131,7 +131,7 @@
             <!-- Navigation Tabs -->
             <nav class="flex items-center gap-2 bg-streetPanel/80 p-1.5 rounded-xl border border-gray-800 text-sm">
                 <button onclick="switchTab('rosterTab')" id="nav-rosterTab" class="nav-btn active px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 bg-streetRed text-white shadow-md">
-                    <i class="fa-solid fa-users"></i> Roster Petarung
+                    <i class="fa-solid fa-users"></i> List Petarung
                 </button>
                 <button onclick="switchTab('arenaTab')" id="nav-arenaTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
                     <i class="fa-solid fa-skull-crossbones"></i> Arena Duel (VS)
@@ -430,51 +430,136 @@
         let fighters = [
             {
                 id: 1,
-                name: "Gilang 'Ramadhan'",
+                name: "Gilang Ramadhan",
                 alias: "Kapten Nyoli",
                 weightClass: "Kelas Gembrot",
                 photo: "https://www.upload.ee/image/19841219/Screenshot_20260924-113748.jpg",
-                stats: { power: 100, speed: 45, stamina: 70 },
+                stats: { power: 77, speed: 45, stamina: 50 },
                 specialMove: "Jab Bikin Modar",
-                wins: 2,
-                ko: 1,
-                losses: 1
+                wins: 0,
+                ko: 0,
+                losses: 0
             },
             {
                 id: 2,
-                name: "Jaya 'Memet'",
+                name: "Jaya Memet",
                 alias: "Si Raja AI",
                 weightClass: "Kelas Menengah",
                 photo: "https://www.upload.ee/image/19841289/IMG_20260921_144520_619.jpg",
-                stats: { power: 90, speed: 82, stamina: 96 },
-                specialMove: "Counter-Punch Sambil Merem",
-                wins: 4,
-                ko: 2,
-                losses: 2
+                stats: { power: 77, speed: 60, stamina: 77 },
+                specialMove: "Kuda-Kuda Ngawi",
+                wins: 0,
+                ko: 0,
+                losses: 0
             },
             {
                 id: 3,
-                name: "Selwin 'Abadi'",
+                name: "Selwin Abadi",
                 alias: "Titan Tahi Lalat",
                 weightClass: "Kelas Menengah",
                 photo: "https://www.upload.ee/image/19841298/IMG_20260922_132343_642.jpg",
-                stats: { power: 84, speed: 78, stamina: 70 },
+                stats: { power: 65, speed: 78, stamina: 70 },
                 specialMove: "Pelorotin Sempaknya",
-                wins: 2,
-                ko: 2,
-                losses: 1
+                wins: 0,
+                ko: 0,
+                losses: 0
             },
             {
                 id: 4,
-                name: "Patih 'Yahudi'",
+                name: "Patih Yahudi",
                 alias: "Pacar nya SISKA",
                 weightClass: "Kelas Rebahan",
                 photo: "https://www.upload.ee/image/19841311/Screenshot_20260921-125716.jpg",
-                stats: { power: 78, speed: 98, stamina: 65 },
-                specialMove: "Suka Sama Fahri",
-                wins: 50,
-                ko: 99,
-                losses: 90
+                stats: { power: 78, speed: 60, stamina: 65 },
+                specialMove: "Suka Sama Siska",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            
+            },
+            {
+               id: 5,
+                name: "Dontol Suka Ngocok",
+                alias: "Pacar Nayara",
+                weightClass: "Kelas Gembrot",
+                photo: "https://www.upload.ee/image/19843902/IMG-20260922-WA0056.jpg",
+                stats: { power: 50, speed: 45, stamina: 10 },
+                specialMove: "DI rodok dari belakang",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 6,
+                name: "SITI MASITO",
+                alias: "BASIS SITO",
+                weightClass: "Kelas Krempeng",
+                photo: "https://www.upload.ee/image/19843990/CamScanner_03-09-2026_12.07.jpg",
+                stats: { power: 50, speed: 75, stamina: 40 },
+                specialMove: "Yapping",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 7,
+                name: "HAMZAH RUSDI",
+                alias: "KING BOTI",
+                weightClass: "Kelas Gembrot",
+                photo: "https://www.upload.ee/image/19843994/hamzah.png",
+                stats: { power: 80, speed: 55, stamina: 70 },
+                specialMove: "Jab Bikin Mimisan",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 8,
+                name: "Saldi BAHENOL",
+                alias: "RAJA SNIPER",
+                weightClass: "Kelas Ringan",
+                photo: "https://www.upload.ee/image/19844000/IMG_20260903_132651_501.jpg",
+                stats: { power: 67, speed: 75, stamina: 65 },
+                specialMove: "Awm Modar",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 9,
+                name: "UTE MASITE",
+                alias: "IKAN TRI",
+                weightClass: "Kelas Krempeng",
+                photo: "https://www.upload.ee/image/19844006/IMG_20260903_132607_442.jpg",
+                stats: { power: 60, speed: 75, stamina: 75 },
+                specialMove: "Tulang Rapuh",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 10,
+                name: "YUDO DAN AZAM",
+                alias: "TWO BROTHER",
+                weightClass: "Kelas ??",
+                photo: "https://www.upload.ee/image/19844017/IMG-20260903-WA0071.jpg",
+                stats: { power: 80, speed: 70, stamina: 95 },
+                specialMove: "A DAY IN MY LIFE",
+                wins: 0,
+                ko: 0,
+                losses: 0
+            },
+            {
+               id: 11,
+                name: "SECRET?",
+                alias: "????????????????????????????",
+                weightClass: "Kelas ?????????",
+                photo: "https://www.upload.ee/image/19844050/secret.png",
+                stats: { power: 99, speed: 99, stamina: 90 },
+                specialMove: "MUANI TERBANG",
+                wins: 0,
+                ko: 0,
+                losses: 0
             }
         ];
 
