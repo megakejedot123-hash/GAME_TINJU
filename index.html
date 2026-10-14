@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yuppentek Street Fighter - Underground Boxing Arena</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Arcade & Action Style) -->
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Press+Start+2P&family=Teko:wght@600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        arcade: ['"Press Start 2P"', 'cursive'],
+                        action: ['"Permanent Marker"', 'cursive'],
+                        teko: ['Teko', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        streetRed: '#ff1e43',
+                        streetGold: '#ffcc00',
+                        streetDark: '#0a0b10',
+                        streetPanel: '#131622',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Neon & Street Fighting Effects */
+        body {
+            background-color: #07080c;
+            color: #f1f5f9;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 30, 67, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 204, 0, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .neon-border-red {
+            box-shadow: 0 0 15px rgba(255, 30, 67, 0.5), inset 0 0 10px rgba(255, 30, 67, 0.2);
+            border: 2px solid #ff1e43;
+        }
+
+        .neon-border-gold {
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.5), inset 0 0 10px rgba(255, 204, 0, 0.2);
+            border: 2px solid #ffcc00;
+        }
+
+        .fighter-card {
+            background: linear-gradient(145deg, #181c2b 0%, #0d101a 100%);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fighter-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .hp-bar-fill {
+            transition: width 0.4s ease-out;
+        }
+
+        /* Scanline effect for retro feel */
+        .scanlines {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        @keyframes punchShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-10px, 5px) rotate(-3deg); }
+            40% { transform: translate(12px, -5px) rotate(3deg); }
+            60% { transform: translate(-8px, -3deg) rotate(-2deg); }
+            80% { transform: translate(8px, 3px) rotate(2deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .shake-animation {
+            animation: punchShake 0.3s ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #07080c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff1e43;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="font-rajdhani min-h-screen pb-16 antialiased selection:bg-streetRed selection:text-white">
+
+    <header class="border-b-2 border-streetRed/40 bg-streetDark/90 backdrop-blur-md sticky top-0 z-40 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- Logo Section -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-streetRed to-amber-500 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-streetRed/40 animate-pulse">
+                    <i class="fa-solid fa-mitten"></i>
+                </div>
+                <div>
+                    <h1 class="font-action text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-streetRed via-yellow-400 to-amber-500 tracking-wider">
+                        YUPPENTEK STREET FIGHTER
+                    </h1>
+                    <p class="text-xs font-arcade text-gray-400 tracking-widest uppercase">Underground Boxing League</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center gap-2 bg-streetPanel/80 p-1.5 rounded-xl border border-gray-800 text-sm">
+                <button onclick="switchTab('rosterTab')" id="nav-rosterTab" class="nav-btn active px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 bg-streetRed text-white shadow-md">
+                    <i class="fa-solid fa-users"></i> Roster Petarung
+                </button>
+                <button onclick="switchTab('arenaTab')" id="nav-arenaTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-skull-crossbones"></i> Arena Duel (VS)
+                </button>
+                <button onclick="switchTab('bracketTab')" id="nav-bracketTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-trophy"></i> Turnamen
+                </button>
+            </nav>
+
+            <!-- Action Button -->
+            <button onclick="openModal('addFighterModal')" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-yellow-500/20 active:scale-95">
+                <i class="fa-solid fa-user-plus text-base"></i> Tambah Petarung
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pt-8">
+
+        <!-- TAB 1: ROSTER PETARUNG -->
+        <section id="rosterTab" class="tab-content space-y-6">
+            <!-- Top Controls: Search & Filters -->
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-streetPanel/60 p-4 rounded-2xl border border-gray-800">
+                <div class="flex items-center gap-2 text-yellow-400 font-teko text-2xl tracking-wider uppercase">
+                    <i class="fa-solid fa-fire text-streetRed"></i> Total Petarung Terdaftar: <span id="totalFightersCount" class="text-white font-extrabold text-3xl ml-1">0</span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative flex-1 md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="searchInput" oninput="renderRoster()" placeholder="Cari nama petarung / julukan..." 
+                               class="w-full pl-10 pr-4 py-2 bg-slate-900/90 border border-gray-700 rounded-xl focus:outline-none focus:border-streetRed text-sm text-slate-200 placeholder-gray-500">
+                    </div>
+                    <!-- Weight Class Filter -->
+                    <select id="weightFilter" onchange="renderRoster()" class="bg-slate-900 border border-gray-700 text-gray-300 text-sm rounded-xl p-2 focus:border-streetRed outline-none">
+                        <option value="ALL">Semua Kelas Berat</option>
+                        <option value="Kelas Berat Ringan">Kelas Berat Ringan</option>
+                        <option value="Kelas Menengah">Kelas Menengah</option>
+                        <option value="Kelas Berat">Kelas Berat</option>
+                        <option value="Kelas Rebahan">Kelas Rebahan</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid Cards Roster -->
+            <div id="rosterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Cards render here dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 2: ARENA DUEL (VS MODE SIMULATOR) -->
+        <section id="arenaTab" class="tab-content hidden space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="font-action text-3xl md:text-5xl text-streetRed tracking-wider uppercase">UNDERGROUND FIGHT RING</h2>
+                <p class="text-gray-400 text-sm">Pilih 2 petarung Yuppentek, lalu mulailah pertarungan tinju simulasi otomatis!</p>
+            </div>
+
+            <!-- VS Selectors Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <!-- Fighter 1 Selector -->
+                <div class="bg-streetPanel p-4 rounded-2xl border border-streetRed/40">
+                    <label class="block text-streetRed font-bold text-xs uppercase mb-2">Pilih Petarung 1 (Sudut Merah)</label>
+                    <select id="selectFighter1" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-streetRed outline-none">
+                        <!-- Options generated in JS -->
+                    </select>
+                </div>
+
+                <!-- Fighter 2 Selector -->
+                <div class="bg-streetPanel p-4 rounded-2xl border border-amber-500/40">
+                    <label class="block text-amber-400 font-bold text-xs uppercase mb-2">Pilih Petarung 2 (Sudut Biru)</label>
+                    <select id="selectFighter2" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-amber-400 outline-none">
+                        <!-- Options generated in JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Arena Fighting Display (Battle Stage) -->
+            <div id="fightStage" class="scanlines relative bg-slate-950 border-4 border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl overflow-hidden">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-8 relative z-20">
+                    
+                    <!-- FIGHTER 1 DISPLAY -->
+                    <div id="arenaP1Card" class="w-full md:w-5/12 text-center space-y-3">
+                        <div class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-streetRed shadow-xl shadow-streetRed/30">
+                            <img id="p1Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 left-2 bg-streetRed text-white text-xs font-bold px-2 py-1 rounded-md uppercase">Corner RED</span>
+                        </div>
+                        <h3 id="p1Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P1 Name</h3>
+                        
+                        <!-- Health Bar P1 -->
+                        <div class="w-full bg-gray-900 rounded-full h-6 border border-streetRed overflow-hidden relative">
+                            <div id="p1HpBar" class="hp-bar-fill bg-gradient-to-r from-red-600 to-streetRed h-full w-full"></div>
+                            <span id="p1HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-white drop-shadow">100 HP</span>
+                        </div>
+                    </div>
+
+                    <!-- VS Emblem & Fight Control Button -->
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <div class="font-arcade text-4xl md:text-6xl text-streetGold italic drop-shadow-[0_0_15px_rgba(255,204,0,0.8)] animate-pulse">
+                            VS
+                        </div>
+                        <button id="startFightBtn" onclick="startSimulatedFight()" class="bg-gradient-to-r from-streetRed via-amber-500 to-streetGold text-black font-action text-xl md:text-2xl px-8 py-4 rounded-2xl hover:scale-105 transition shadow-2xl shadow-streetRed/50 active:scale-95 border-2 border-yellow-300 uppercase">
+                            <i class="fa-solid fa-boxing-glove mr-2"></i> MULAI BERTARUNG!
+                        </button>
+                    </div>
+
+                    <!-- FIGHTER 2 DISPLAY -->
+                    <div id="arenaP2Card" class="w-full md:w-5/12 text-center space-y-3">
+                        <div class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-amber-400 shadow-xl shadow-amber-500/30">
+                            <img id="p2Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1 rounded-md uppercase">Corner BLUE</span>
+                        </div>
+                        <h3 id="p2Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P2 Name</h3>
+                        
+                        <!-- Health Bar P2 -->
+                        <div class="w-full bg-gray-900 rounded-full h-6 border border-amber-400 overflow-hidden relative">
+                            <div id="p2HpBar" class="hp-bar-fill bg-gradient-to-r from-amber-500 to-yellow-300 h-full w-full"></div>
+                            <span id="p2HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-black drop-shadow">100 HP</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Battle Live Log Console -->
+                <div class="mt-8 bg-black/80 rounded-2xl p-4 border border-gray-800 text-left">
+                    <h4 class="font-arcade text-xs text-yellow-400 uppercase mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> Ring Fight Commentary Log:
+                    </h4>
+                    <div id="fightLog" class="h-36 overflow-y-auto font-mono text-xs text-green-400 space-y-1 p-2 bg-slate-950 rounded-xl border border-gray-900">
+                        <p class="text-gray-500 italic">> Tekan 'MULAI BERTARUNG!' untuk memulai jam pertandingan ring tinju Yuppentek.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: BRACKET TURNAMEN & LEADERBOARD -->
+        <section id="bracketTab" class="tab-content hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left 2 Col: Tournament Schedule -->
+                <div class="lg:col-span-2 space-y-4">
+                    <h3 class="font-action text-2xl text-yellow-400 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-streetRed"></i> Bagan Turnamen Yuppentek Championship
+                    </h3>
+
+                    <div class="bg-streetPanel p-6 rounded-2xl border border-gray-800 space-y-6">
+                        <!-- Round 1 Semi Finals -->
+                        <div>
+                            <span class="font-arcade text-xs text-streetRed block mb-3 uppercase">-- SEMI FINALS RING --</span>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-900 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-sm">
+                                    <span class="font-bold text-white">Ahmad 'The Smile'</span>
+                                    <span class="bg-streetRed text-white text-xs px-2 py-0.5 rounded font-arcade">VS</span>
+                                    <span class="font-bold text-gray-300">Rian 'Sleepwalker'</span>
+                                </div>
+                                <div class="bg-slate-900 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-sm">
+                                    <span class="font-bold text-white">Dimas 'Tembok Abadi'</span>
+                                    <span class="bg-streetRed text-white text-xs px-2 py-0.5 rounded font-arcade">VS</span>
+                                    <span class="font-bold text-gray-300">Fajri 'Kiper Santai'</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grand Finale -->
+                        <div>
+                            <span class="font-arcade text-xs text-yellow-400 block mb-3 uppercase">-- GRAND FINALE MATCH --</span>
+                            <div class="bg-gradient-to-r from-red-950 via-slate-900 to-amber-950 p-4 rounded-xl border-2 border-yellow-500 flex justify-between items-center text-base">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-crown text-yellow-400"></i>
+                                    <span class="font-bold text-yellow-300">Pemenang Semi Final 1</span>
+                                </div>
+                                <span class="font-action text-2xl text-yellow-400">VS</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-yellow-300">Pemenang Semi Final 2</span>
+                                    <i class="fa-solid fa-crown text-yellow-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 1 Col: Leaderboard KO Record -->
+                <div class="space-y-4">
+                    <h3 class="font-action text-2xl text-yellow-400 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-ranking-star text-streetGold"></i> Top Peringkat KO
+                    </h3>
+
+                    <div id="leaderboardList" class="bg-streetPanel p-4 rounded-2xl border border-gray-800 space-y-3">
+                        <!-- Leaderboard rendered dynamically -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: Detail & Edit Photo URL Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-streetPanel border-2 border-streetRed w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative p-6 space-y-4">
+            <button onclick="closeModal('editModal')" class="absolute top-4 right-4 w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="font-action text-2xl text-yellow-400 uppercase">Profil & Ganti URL Foto</h3>
+
+            <div class="flex items-center gap-4 bg-slate-900 p-3 rounded-xl border border-gray-800">
+                <img id="editModalAvatar" src="" class="w-20 h-20 rounded-xl object-cover border-2 border-streetRed">
+                <div>
+                    <h4 id="editModalName" class="font-teko text-2xl text-white font-bold leading-none">Name</h4>
+                    <p id="editModalAlias" class="text-xs text-amber-400 font-semibold italic">Alias</p>
+                </div>
+            </div>
+
+            <!-- Form Edit URL Foto -->
+            <div class="space-y-2">
+                <label class="block text-xs uppercase text-gray-400 font-bold">URL Foto Baru</label>
+                <input type="url" id="editPhotoUrlInput" placeholder="https://contoh.com/foto.jpg" 
+                       class="w-full bg-slate-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:border-streetRed outline-none">
+                <p class="text-[11px] text-gray-500 italic">Tempel link gambar (Google Drive public link / Imgur / Pinterest / dll).</p>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeModal('editModal')" class="px-4 py-2 bg-gray-800 text-gray-300 font-bold rounded-xl text-xs hover:bg-gray-700">Batal</button>
+                <button id="savePhotoBtn" onclick="savePhotoUrl()" class="px-5 py-2 bg-streetRed hover:bg-red-600 text-white font-bold rounded-xl text-xs transition shadow-lg">Simpan Foto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Add New Fighter Modal -->
+    <div id="addFighterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-streetPanel border-2 border-yellow-500 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative p-6">
+            <button onclick="closeModal('addFighterModal')" class="absolute top-4 right-4 w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="font-action text-2xl text-yellow-400 uppercase mb-4">Registrasi Petarung Baru</h3>
+
+            <form id="addFighterForm" onsubmit="handleAddNewFighter(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Nama Petarung / Panggilan</label>
+                    <input type="text" id="newFighterName" required placeholder="misal: Budi 'Si Jab Tebal'" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white focus:border-yellow-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-400 mb-1">Julukan Ring</label>
+                        <input type="text" id="newFighterAlias" required placeholder="misal: Raja Uppercut" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white focus:border-yellow-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-1">Kelas Berat</label>
+                        <select id="newFighterClass" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white focus:border-yellow-500 outline-none">
+                            <option value="Kelas Berat Ringan">Kelas Berat Ringan</option>
+                            <option value="Kelas Menengah">Kelas Menengah</option>
+                            <option value="Kelas Berat">Kelas Berat</option>
+                            <option value="Kelas Rebahan">Kelas Rebahan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1">URL Foto Petarung</label>
+                    <input type="url" id="newFighterPhoto" required placeholder="https://..." class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white focus:border-yellow-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-gray-400 mb-1">Power (1-99)</label>
+                        <input type="number" id="newFighterPower" min="50" max="99" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-1">Speed (1-99)</label>
+                        <input type="number" id="newFighterSpeed" min="50" max="99" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-1">Stamina (1-99)</label>
+                        <input type="number" id="newFighterDefense" min="50" max="99" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1">Jurus Spesial / Gaya Tarung</label>
+                    <input type="text" id="newFighterSpecial" placeholder="misal: Hook Kiri Mematikan" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white focus:border-yellow-500 outline-none">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold py-3 rounded-xl hover:brightness-110 transition uppercase">
+                        Daftarkan Ke Ring
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initial Roster Data using your friend photos
+        let fighters = [
+            {
+                id: 1,
+                name: "Gilang 'Ramadhan'",
+                alias: "Kapten Nyoli",
+                weightClass: "Kelas Gembrot",
+                photo: "https://www.upload.ee/image/19841219/Screenshot_20260924-113748.jpg",
+                stats: { power: 100, speed: 45, stamina: 70 },
+                specialMove: "Jab Bikin Modar",
+                wins: 2,
+                ko: 1,
+                losses: 1
+            },
+            {
+                id: 2,
+                name: "Jaya 'Memet'",
+                alias: "Si Raja AI",
+                weightClass: "Kelas Menengah",
+                photo: "https://www.upload.ee/image/19841289/IMG_20260921_144520_619.jpg",
+                stats: { power: 90, speed: 82, stamina: 96 },
+                specialMove: "Counter-Punch Sambil Merem",
+                wins: 4,
+                ko: 2,
+                losses: 2
+            },
+            {
+                id: 3,
+                name: "Selwin 'Abadi'",
+                alias: "Titan Tahi Lalat",
+                weightClass: "Kelas Menengah",
+                photo: "https://www.upload.ee/image/19841298/IMG_20260922_132343_642.jpg",
+                stats: { power: 84, speed: 78, stamina: 70 },
+                specialMove: "Pelorotin Sempaknya",
+                wins: 2,
+                ko: 2,
+                losses: 1
+            },
+            {
+                id: 4,
+                name: "Patih 'Yahudi'",
+                alias: "Pacar nya SISKA",
+                weightClass: "Kelas Rebahan",
+                photo: "https://www.upload.ee/image/19841311/Screenshot_20260921-125716.jpg",
+                stats: { power: 78, speed: 98, stamina: 65 },
+                specialMove: "Suka Sama Fahri",
+                wins: 50,
+                ko: 99,
+                losses: 90
+            }
+        ];
+
+        let selectedFighterForEdit = null;
+        let isFighting = false;
+
+        // Render Cards in Roster Tab
+        function renderRoster() {
+            const grid = document.getElementById('rosterGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const weight = document.getElementById('weightFilter').value;
+
+            grid.innerHTML = '';
+
+            const filtered = fighters.filter(f => {
+                const matchSearch = f.name.toLowerCase().includes(search) || f.alias.toLowerCase().includes(search);
+                const matchWeight = weight === 'ALL' || f.weightClass === weight;
+                return matchSearch && matchWeight;
+            });
+
+            filtered.forEach(f => {
+                const card = document.createElement('div');
+                card.className = "fighter-card rounded-2xl border border-gray-800 overflow-hidden p-4 flex flex-col justify-between group hover:border-streetRed";
+                card.innerHTML = `
+                    <div>
+                        <!-- Header Card -->
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[11px] font-arcade bg-streetRed/20 text-streetRed border border-streetRed/40 px-2 py-1 rounded">
+                                ${f.weightClass}
+                            </span>
+                            <button onclick="openEditModal(${f.id})" title="Ganti Foto URL" class="w-8 h-8 rounded-full bg-slate-900 border border-gray-700 hover:border-yellow-400 hover:text-yellow-400 flex items-center justify-center text-xs transition">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </div>
+
+                        <!-- Image Frame -->
+                        <div class="relative w-full h-52 rounded-xl overflow-hidden bg-slate-950 border border-gray-800 mb-3 group-hover:border-streetRed/50 transition">
+                            <img src="${f.photo}" onerror="this.src='https://placehold.co/400x500/181c2b/ff1e43?text=Petarung+Yuppentek'" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-2 text-center">
+                                <span class="text-[10px] text-amber-400 font-bold tracking-widest uppercase">Special: ${f.specialMove}</span>
+                            </div>
+                        </div>
+
+                        <!-- Fighter Info -->
+                        <div class="text-center mb-3">
+                            <h3 class="font-teko text-2xl font-bold uppercase text-white leading-tight">${f.name}</h3>
+                            <p class="text-xs text-streetRed font-action">"${f.alias}"</p>
+                        </div>
+
+                        <!-- Stats Progress Bars -->
+                        <div class="space-y-1.5 text-xs text-gray-300 font-bold mb-4">
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-0.5"><span>POWER</span> <span>${f.stats.power}</span></div>
+                                <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-red-500 h-full" style="width: ${f.stats.power}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-0.5"><span>SPEED</span> <span>${f.stats.speed}</span></div>
+                                <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-yellow-400 h-full" style="width: ${f.stats.speed}%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] mb-0.5"><span>STAMINA</span> <span>${f.stats.stamina}</span></div>
+                                <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-blue-400 h-full" style="width: ${f.stats.stamina}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Record Wins/KO Footer -->
+                    <div class="border-t border-gray-800/80 pt-2 flex justify-between text-xs text-gray-400 font-teko text-base">
+                        <span>Menang: <b class="text-green-400">${f.wins}</b></span>
+                        <span>KO: <b class="text-streetRed">${f.ko}</b></span>
+                        <span>Kalah: <b class="text-gray-500">${f.losses}</b></span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('totalFightersCount').innerText = fighters.length;
+            renderLeaderboard();
+        }
+
+        // Render Leaderboard
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+
+            const sorted = [...fighters].sort((a,b) => b.ko - a.ko);
+
+            sorted.forEach((f, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-gray-800";
+                
+                let rankBadge = `<span class="font-arcade text-xs text-gray-400">#${idx + 1}</span>`;
+                if(idx === 0) rankBadge = `<i class="fa-solid fa-trophy text-yellow-400 text-lg"></i>`;
+                if(idx === 1) rankBadge = `<i class="fa-solid fa-medal text-slate-300 text-lg"></i>`;
+                if(idx === 2) rankBadge = `<i class="fa-solid fa-award text-amber-600 text-lg"></i>`;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${rankBadge}
+                        <img src="${f.photo}" onerror="this.src='https://placehold.co/100x100/181c2b/ff1e43?text=Fighter'" class="w-10 h-10 rounded-lg object-cover border border-gray-700">
+                        <div>
+                            <h4 class="font-bold text-white text-sm leading-tight">${f.name}</h4>
+                            <p class="text-[10px] text-gray-400">${f.weightClass}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-teko text-xl font-bold text-streetRed leading-none block">${f.ko} KO</span>
+                        <span class="text-[10px] text-gray-500">${f.wins} Win</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-streetRed', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            activeNav.classList.add('bg-streetRed', 'text-white', 'shadow-md');
+            activeNav.classList.remove('text-gray-400');
+
+            if(tabId === 'arenaTab') {
+                populateArenaSelectors();
+                updateArenaFighters();
+            }
+        }
+
+        // Populate VS Arena Selector Options
+        function populateArenaSelectors() {
+            const s1 = document.getElementById('selectFighter1');
+            const s2 = document.getElementById('selectFighter2');
+
+            s1.innerHTML = '';
+            s2.innerHTML = '';
+
+            fighters.forEach((f, idx) => {
+                const opt1 = new Option(f.name + " (" + f.alias + ")", f.id);
+                const opt2 = new Option(f.name + " (" + f.alias + ")", f.id);
+                s1.add(opt1);
+                s2.add(opt2);
+            });
+
+            if(fighters.length > 1) {
+                s2.selectedIndex = 1;
+            }
+        }
+
+        // Update Arena Visuals when Fighters change
+        function updateArenaFighters() {
+            const p1Id = parseInt(document.getElementById('selectFighter1').value);
+            const p2Id = parseInt(document.getElementById('selectFighter2').value);
+
+            const p1 = fighters.find(f => f.id === p1Id);
+            const p2 = fighters.find(f => f.id === p2Id);
+
+            if(p1) {
+                document.getElementById('p1Img').src = p1.photo;
+                document.getElementById('p1Name').innerText = p1.name;
+                document.getElementById('p1HpBar').style.width = '100%';
+                document.getElementById('p1HpText').innerText = '100 HP';
+            }
+
+            if(p2) {
+                document.getElementById('p2Img').src = p2.photo;
+                document.getElementById('p2Name').innerText = p2.name;
+                document.getElementById('p2HpBar').style.width = '100%';
+                document.getElementById('p2HpText').innerText = '100 HP';
+            }
+        }
+
+        function startSimulatedFight() {
+            if(isFighting) return;
+
+            const p1Id = parseInt(document.getElementById('selectFighter1').value);
+            const p2Id = parseInt(document.getElementById('selectFighter2').value);
+
+            if(p1Id === p2Id) {
+                alert("Pilih 2 petarung yang berbeda untuk berduel!");
+                return;
+            }
+
+            const p1 = fighters.find(f => f.id === p1Id);
+            const p2 = fighters.find(f => f.id === p2Id);
+
+            isFighting = true;
+            document.getElementById('startFightBtn').disabled = true;
+            document.getElementById('startFightBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+            let hp1 = 100;
+            let hp2 = 100;
+
+            const log = document.getElementById('fightLog');
+            log.innerHTML = `<p class="text-yellow-400 font-bold">> BEL RING BERBUNYI! Ronde dimulai antara ${p1.name} vs ${p2.name}!</p>`;
+
+            const stage = document.getElementById('fightStage');
+
+            const fightInterval = setInterval(() => {
+                // Random turn attacker
+                const isP1Attacking = Math.random() > 0.5;
+                const attacker = isP1Attacking ? p1 : p2;
+                const defender = isP1Attacking ? p2 : p1;
+
+                // Calculate damage based on attacker Power vs defender Stamina
+                const rawDmg = Math.floor(Math.random() * 18) + 8;
+                const finalDmg = Math.max(5, rawDmg + Math.floor(attacker.stats.power / 10) - Math.floor(defender.stats.stamina / 12));
+
+                // Special Attack chance
+                const isSpecial = Math.random() < 0.25;
+
+                // Visual Shake
+                stage.classList.add('shake-animation');
+                setTimeout(() => stage.classList.remove('shake-animation'), 300);
+
+                if(isP1Attacking) {
+                    hp2 = Math.max(0, hp2 - finalDmg);
+                    document.getElementById('p2HpBar').style.width = hp2 + '%';
+                    document.getElementById('p2HpText').innerText = hp2 + ' HP';
+                } else {
+                    hp1 = Math.max(0, hp1 - finalDmg);
+                    document.getElementById('p1HpBar').style.width = hp1 + '%';
+                    document.getElementById('p1HpText').innerText = hp1 + ' HP';
+                }
+
+                // Append combat log
+                const logItem = document.createElement('p');
+                if(isSpecial) {
+                    logItem.className = "text-yellow-300 font-bold";
+                    logItem.innerText = `⚡ ${attacker.name} mengeluarkan JURUS SPESIAL [${attacker.specialMove}]! Kena ${finalDmg} DMG!`;
+                } else {
+                    logItem.innerText = `🥊 ${attacker.name} mendaratkan PUKULAN HOOK! ${defender.name} terkena ${finalDmg} DMG!`;
+                }
+                log.appendChild(logItem);
+                log.scrollTop = log.scrollHeight;
+
+                // Check Knockout
+                if(hp1 <= 0 || hp2 <= 0) {
+                    clearInterval(fightInterval);
+                    isFighting = false;
+                    document.getElementById('startFightBtn').disabled = false;
+                    document.getElementById('startFightBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                    const winner = hp1 > 0 ? p1 : p2;
+                    const loser = hp1 > 0 ? p2 : p1;
+
+                    // Update stats records
+                    winner.wins += 1;
+                    winner.ko += 1;
+                    loser.losses += 1;
+
+                    const endLog = document.createElement('p');
+                    endLog.className = "text-red-500 font-bold text-sm pt-2 uppercase tracking-widest";
+                    endLog.innerText = `🔔 KNOCKOUT! ${winner.name} MEMENANGKAN PERTANDINGAN DENGAN KO TELEMAK!`;
+                    log.appendChild(endLog);
+                    log.scrollTop = log.scrollHeight;
+
+                    renderRoster(); // Refresh stats on cards
+                }
+            }, 1200);
+        }
+
+        // Edit Photo Modal Handlers
+        function openEditModal(id) {
+            selectedFighterForEdit = fighters.find(f => f.id === id);
+            if(!selectedFighterForEdit) return;
+
+            document.getElementById('editModalAvatar').src = selectedFighterForEdit.photo;
+            document.getElementById('editModalName').innerText = selectedFighterForEdit.name;
+            document.getElementById('editModalAlias').innerText = `"${selectedFighterForEdit.alias}"`;
+            document.getElementById('editPhotoUrlInput').value = selectedFighterForEdit.photo;
+
+            openModal('editModal');
+        }
+
+        function savePhotoUrl() {
+            const url = document.getElementById('editPhotoUrlInput').value.trim();
+            if(!url) {
+                alert("URL foto tidak boleh kosong!");
+                return;
+            }
+
+            if(selectedFighterForEdit) {
+                selectedFighterForEdit.photo = url;
+                renderRoster();
+                closeModal('editModal');
+            }
+        }
+
+        // Add New Fighter Handler
+        function handleAddNewFighter(e) {
+            e.preventDefault();
+            const name = document.getElementById('newFighterName').value;
+            const alias = document.getElementById('newFighterAlias').value;
+            const weightClass = document.getElementById('newFighterClass').value;
+            const photo = document.getElementById('newFighterPhoto').value;
+            const power = parseInt(document.getElementById('newFighterPower').value) || 80;
+            const speed = parseInt(document.getElementById('newFighterSpeed').value) || 80;
+            const defense = parseInt(document.getElementById('newFighterDefense').value) || 80;
+            const special = document.getElementById('newFighterSpecial').value || "Pukulan Bayangan";
+
+            const newFighter = {
+                id: Date.now(),
+                name: name,
+                alias: alias,
+                weightClass: weightClass,
+                photo: photo,
+                stats: { power: power, speed: speed, stamina: defense },
+                specialMove: special,
+                wins: 0,
+                ko: 0,
+                losses: 0
+            };
+
+            fighters.unshift(newFighter);
+            renderRoster();
+            closeModal('addFighterModal');
+            document.getElementById('addFighterForm').reset();
+        }
+
+        // Modal Helpers
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Window Onload Initialization
+        window.onload = function() {
+            renderRoster();
+        };
+    </script>
+</body>
+</html>
