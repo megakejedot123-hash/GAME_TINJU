@@ -1,1 +1,853 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKJ I Street Fighter - Class Boxing Arena</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Press+Start+2P&family=Teko:wght@600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        arcade: ['"Press Start 2P"', 'cursive'],
+                        action: ['"Permanent Marker"', 'cursive'],
+                        teko: ['Teko', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        streetRed: '#ff1e43',
+                        streetGold: '#ffcc00',
+                        streetDark: '#0a0b10',
+                        streetPanel: '#131622',
+                    }
+                }
+            }
+        }
+    </script>
 
+    <style>
+        body {
+            background-color: #07080c;
+            color: #f1f5f9;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 30, 67, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 204, 0, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .fighter-card {
+            background: linear-gradient(145deg, #181c2b 0%, #0d101a 100%);
+            border: 1px solid #1f2937;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fighter-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: #ff1e43;
+        }
+
+        .hp-bar-fill {
+            transition: width 0.5s ease-out;
+        }
+
+        .scanlines {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        @keyframes brutalShake {
+            0% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+            15% { transform: translate(-16px, 8px) rotate(-5deg); filter: brightness(1.5) sepia(1) hue-rotate(-50deg); }
+            30% { transform: translate(16px, -8px) rotate(5deg); filter: brightness(1.3); }
+            45% { transform: translate(-12px, -6px) rotate(-3deg); filter: brightness(1.4); }
+            60% { transform: translate(12px, 6px) rotate(3deg); filter: brightness(1.2); }
+            100% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+        }
+
+        .brutal-shake-animation {
+            animation: brutalShake 0.4s ease-in-out;
+        }
+
+        @keyframes floatText {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(-55px) scale(1.4); opacity: 0; }
+        }
+
+        .floating-damage {
+            animation: floatText 0.8s ease-out forwards;
+        }
+
+        @keyframes bannerZoom {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .winner-banner-anim {
+            animation: bannerZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #07080c; }
+        ::-webkit-scrollbar-thumb { background: #ff1e43; border-radius: 4px; }
+    </style>
+</head>
+<body class="font-rajdhani min-h-screen pb-16 antialiased selection:bg-streetRed selection:text-white">
+
+    <header class="border-b-2 border-streetRed/40 bg-streetDark/90 backdrop-blur-md sticky top-0 z-40 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-streetRed to-amber-500 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-streetRed/40 animate-pulse">
+                    <i class="fa-solid fa-mitten"></i>
+                </div>
+                <div>
+                    <h1 class="font-action text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-streetRed via-yellow-400 to-amber-500 tracking-wider">
+                        TKJ I STREET FIGHTER
+                    </h1>
+                    <p class="text-xs font-arcade text-gray-400 tracking-widest uppercase">Underground Boxing League</p>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-2 bg-streetPanel/80 p-1.5 rounded-xl border border-gray-800 text-sm">
+                <button onclick="switchTab('rosterTab')" id="nav-rosterTab" class="nav-btn active px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 bg-streetRed text-white shadow-md">
+                    <i class="fa-solid fa-users"></i> List Petarung
+                </button>
+                <button onclick="switchTab('arenaTab')" id="nav-arenaTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-skull-crossbones"></i> Arena Duel (VS)
+                </button>
+                <button onclick="switchTab('bracketTab')" id="nav-bracketTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-trophy"></i> Turnamen (10 Orang)
+                </button>
+            </nav>
+
+            <button onclick="openModal('addFighterModal')" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-yellow-500/20 active:scale-95">
+                <i class="fa-solid fa-user-plus text-base"></i> Tambah Petarung
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pt-8">
+
+        <!-- TAB 1: ROSTER PETARUNG -->
+        <section id="rosterTab" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-streetPanel/60 p-4 rounded-2xl border border-gray-800">
+                <div class="flex items-center gap-2 text-yellow-400 font-teko text-2xl tracking-wider uppercase">
+                    <i class="fa-solid fa-fire text-streetRed"></i> Total Petarung Terdaftar: <span id="totalFightersCount" class="text-white font-extrabold text-3xl ml-1">0</span>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="searchInput" oninput="renderRoster()" placeholder="Cari nama petarung..." 
+                               class="w-full pl-10 pr-4 py-2 bg-slate-900/90 border border-gray-700 rounded-xl focus:outline-none focus:border-streetRed text-sm text-slate-200">
+                    </div>
+                </div>
+            </div>
+
+            <div id="rosterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <!-- TAB 2: ARENA DUEL (VS MODE) -->
+        <section id="arenaTab" class="tab-content hidden space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="font-action text-3xl md:text-5xl text-streetRed tracking-wider uppercase">UNDERGROUND FIGHT RING</h2>
+                <p class="text-gray-400 text-sm">Getaran layar brutal, banner pemenang di tengah ring, Special (5%), & Awakened (2%)!</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="bg-streetPanel p-4 rounded-2xl border border-streetRed/40">
+                    <label class="block text-streetRed font-bold text-xs uppercase mb-2">Pilih Petarung 1 (Sudut Merah)</label>
+                    <select id="selectFighter1" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-streetRed outline-none"></select>
+                </div>
+                <div class="bg-streetPanel p-4 rounded-2xl border border-amber-500/40">
+                    <label class="block text-amber-400 font-bold text-xs uppercase mb-2">Pilih Petarung 2 (Sudut Biru)</label>
+                    <select id="selectFighter2" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-amber-400 outline-none"></select>
+                </div>
+            </div>
+
+            <div id="fightStage" class="scanlines relative bg-slate-950 border-4 border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl overflow-hidden">
+                
+                <!-- BANNER PENGUMUMAN PEMENANG DI TENGAH STAGE -->
+                <div id="arenaWinnerBanner" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center winner-banner-anim">
+                    <div class="w-24 h-24 rounded-2xl overflow-hidden border-4 border-yellow-400 shadow-2xl shadow-yellow-500/50 mb-4">
+                        <img id="bannerWinnerImg" src="" class="w-full h-full object-cover">
+                    </div>
+                    <span class="text-yellow-400 font-arcade text-xs tracking-widest uppercase mb-1"><i class="fa-solid fa-crown text-streetGold"></i> KNOCKOUT VICTORY <i class="fa-solid fa-crown text-streetGold"></i></span>
+                    <h3 id="bannerWinnerName" class="font-action text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-streetRed via-yellow-400 to-amber-500 uppercase tracking-wider mb-2">NAMA PEMENANG</h3>
+                    <p id="bannerWinnerDesc" class="text-gray-300 text-xs md:text-sm font-semibold max-w-md italic mb-6">TELAH MEMENANGKAN PERTANDINGAN DENGAN TELAK!</p>
+                    <button onclick="closeArenaBanner()" class="bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:scale-105 transition shadow-lg">
+                        Lanjut / Tutup Arena
+                    </button>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center gap-8 relative z-20">
+                    
+                    <!-- FIGHTER 1 -->
+                    <div id="arenaP1Card" class="w-full md:w-5/12 text-center space-y-3 relative">
+                        <div id="p1FloatingText" class="absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg text-red-500 font-bold pointer-events-none z-30 opacity-0"></div>
+                        
+                        <div id="p1PhotoFrame" class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-streetRed shadow-xl shadow-streetRed/30 transition">
+                            <img id="p1Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 left-2 bg-streetRed text-white text-xs font-bold px-2 py-1 rounded-md uppercase">Corner RED</span>
+                        </div>
+                        <h3 id="p1Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P1 Name</h3>
+                        <div class="w-full bg-gray-900 rounded-full h-6 border border-streetRed overflow-hidden relative">
+                            <div id="p1HpBar" class="hp-bar-fill bg-gradient-to-r from-red-600 to-streetRed h-full w-full" style="width: 100%;"></div>
+                            <span id="p1HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-white drop-shadow">100 HP</span>
+                        </div>
+                    </div>
+
+                    <!-- VS & BUTTON -->
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <div class="font-arcade text-4xl md:text-6xl text-streetGold italic drop-shadow-[0_0_15px_rgba(255,204,0,0.8)] animate-pulse">VS</div>
+                        <button id="startFightBtn" onclick="startSimulatedFight()" class="bg-gradient-to-r from-streetRed via-amber-500 to-streetGold text-black font-action text-xl md:text-2xl px-8 py-4 rounded-2xl hover:scale-105 transition shadow-2xl shadow-streetRed/50 active:scale-95 border-2 border-yellow-300 uppercase">
+                            <i class="fa-solid fa-boxing-glove mr-2"></i> MULAI BERTARUNG!
+                        </button>
+                    </div>
+
+                    <!-- FIGHTER 2 -->
+                    <div id="arenaP2Card" class="w-full md:w-5/12 text-center space-y-3 relative">
+                        <div id="p2FloatingText" class="absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg text-red-500 font-bold pointer-events-none z-30 opacity-0"></div>
+
+                        <div id="p2PhotoFrame" class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-amber-400 shadow-xl shadow-amber-500/30 transition">
+                            <img id="p2Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1 rounded-md uppercase">Corner BLUE</span>
+                        </div>
+                        <h3 id="p2Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P2 Name</h3>
+                        <div class="w-full bg-gray-900 rounded-full h-6 border border-amber-400 overflow-hidden relative">
+                            <div id="p2HpBar" class="hp-bar-fill bg-gradient-to-r from-amber-500 to-yellow-300 h-full w-full" style="width: 100%;"></div>
+                            <span id="p2HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-black drop-shadow">100 HP</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Chat Logs Komentator di Bawah -->
+                <div class="mt-8 bg-black/80 rounded-2xl p-4 border border-gray-800 text-left">
+                    <h4 class="font-arcade text-xs text-yellow-400 uppercase mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> Ring Fight Commentary Log:
+                    </h4>
+                    <div id="fightLog" class="h-36 overflow-y-auto font-mono text-xs text-green-400 space-y-1 p-2 bg-slate-950 rounded-xl border border-gray-900">
+                        <p class="text-gray-500 italic">> Tekan 'MULAI BERTARUNG!' untuk memulai pertandingan.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TURNAMEN 10 ORANG -->
+        <section id="bracketTab" class="tab-content hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-streetPanel p-4 rounded-2xl border border-gray-800">
+                        <div>
+                            <h3 class="font-action text-2xl text-yellow-400 uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-sitemap text-streetRed"></i> Turnamen Akbar (10 Petarung)
+                            </h3>
+                            <p class="text-xs text-gray-400">Stats tinggi lebih diunggulkan, peluang kejutan Awakened aktif!</p>
+                        </div>
+                        <button onclick="generate10PlayerTournament()" class="bg-gradient-to-r from-streetRed to-amber-600 hover:brightness-110 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-streetRed/30 active:scale-95">
+                            <i class="fa-solid fa-shuffle"></i> Mulai Turnamen 10 Orang
+                        </button>
+                    </div>
+
+                    <div class="bg-streetPanel p-6 rounded-2xl border border-gray-800 space-y-6">
+                        <div>
+                            <span class="font-arcade text-xs text-streetRed block mb-3 uppercase">-- BABAK PENYISIHAN (5 MATCH) --</span>
+                            <div id="round1Container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-900 p-4 rounded-xl border border-gray-700 text-center text-gray-500 italic text-sm md:col-span-2">
+                                    Tekan tombol "Mulai Turnamen 10 Orang" di atas.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="font-arcade text-xs text-yellow-400 block mb-3 uppercase">-- GRAND FINALE --</span>
+                            <div id="grandFinaleBox" class="bg-gradient-to-r from-red-950 via-slate-900 to-amber-950 p-4 rounded-xl border-2 border-yellow-500 text-center space-y-3">
+                                <span class="text-xs text-gray-400 uppercase block">Perebutan Sabuk Juara Utama</span>
+                                <div class="flex justify-around items-center font-bold text-sm" id="grandFinalistsText">
+                                    <span>- Finalis 1 -</span>
+                                    <span class="font-action text-2xl text-yellow-400">VS</span>
+                                    <span>- Finalis 2 -</span>
+                                </div>
+                                <button id="playGrandFinalBtn" onclick="simGrandFinal10()" disabled class="bg-yellow-500 text-black font-extrabold px-6 py-2 rounded-xl text-xs uppercase opacity-50 cursor-not-allowed">Duel Grand Final</button>
+                            </div>
+                        </div>
+
+                        <!-- Surprise Champion Celebration Box & Banner Nama Sesuai List -->
+                        <div id="championBox" class="hidden bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 p-6 rounded-2xl text-black text-center shadow-2xl space-y-3 animate-bounce">
+                            <div class="font-arcade text-xs uppercase tracking-widest"><i class="fa-solid fa-crown"></i> PENGUMUMAN JUARA TURNAMEN <i class="fa-solid fa-crown"></i></div>
+                            <h2 id="championName" class="font-action text-4xl uppercase tracking-wider">NAMA JUARA</h2>
+                            <p id="championDescText" class="text-xs font-extrabold uppercase tracking-wide">TELAH MEMENANGKAN TURNAMEN AKBAR</p>
+                            <p id="championAlias" class="text-xs font-semibold italic">Julukan & Jurus</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="font-action text-2xl text-yellow-400 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-ranking-star text-streetGold"></i> Top Peringkat KO
+                    </h3>
+                    <div id="leaderboardList" class="bg-streetPanel p-4 rounded-2xl border border-gray-800 space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: ADMIN SKIN MANAGER -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-streetPanel border-2 border-streetRed w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative p-6 space-y-4">
+            <button onclick="closeModal('editModal')" class="absolute top-4 right-4 w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-action text-2xl text-yellow-400 uppercase">Admin Skin Manager (Eksklusif Kodingan)</h3>
+            <div class="flex items-center gap-4 bg-slate-900 p-3 rounded-xl border border-gray-800">
+                <img id="editModalAvatar" src="" class="w-20 h-20 rounded-xl object-cover border-2 border-streetRed">
+                <div>
+                    <h4 id="editModalName" class="font-teko text-2xl text-white font-bold leading-none">Name</h4>
+                    <p id="editModalAlias" class="text-xs text-amber-400 font-semibold italic">Alias</p>
+                    <span id="editModalId" class="text-[10px] bg-streetRed/20 text-streetRed px-2 py-0.5 rounded font-arcade">ID: -</span>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-xs uppercase text-gray-400 font-bold">Pilih Skin Alternatif yang Telah Diprogram Admin:</label>
+                <div id="adminSkinOptions" class="flex flex-wrap gap-2"></div>
+                <p class="text-[11px] text-gray-500 italic mt-1">*Publik tidak dapat memasukkan foto sembarangan. Hanya admin yang mengatur di kodingan.</p>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeModal('editModal')" class="px-5 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl text-xs">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD FIGHTER -->
+    <div id="addFighterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-streetPanel border-2 border-yellow-500 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative p-6">
+            <button onclick="closeModal('addFighterModal')" class="absolute top-4 right-4 w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-action text-2xl text-yellow-400 uppercase mb-4">Registrasi Petarung Baru</h3>
+            <form id="addFighterForm" onsubmit="handleAddNewFighter(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">Nama Petarung</label>
+                    <input type="text" id="newFighterName" required class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-400 mb-1">Julukan</label>
+                        <input type="text" id="newFighterAlias" required class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-1">Kelas Berat</label>
+                        <select id="newFighterClass" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white">
+                            <option value="Kelas Berat Ringan">Kelas Berat Ringan</option>
+                            <option value="Kelas Menengah">Kelas Menengah</option>
+                            <option value="Kelas Berat">Kelas Berat</option>
+                            <option value="Kelas Rebahan">Kelas Rebahan</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">URL Foto Utama</label>
+                    <input type="url" id="newFighterPhoto" required class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white">
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="text-gray-400">Power</label><input type="number" id="newFighterPower" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white"></div>
+                    <div><label class="text-gray-400">Speed</label><input type="number" id="newFighterSpeed" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white"></div>
+                    <div><label class="text-gray-400">Stamina</label><input type="number" id="newFighterDefense" value="85" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2 text-white"></div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">Jurus Spesial</label>
+                    <input type="text" id="newFighterSpecial" class="w-full bg-slate-900 border border-gray-700 rounded-xl p-2.5 text-white">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold py-3 rounded-xl uppercase">Daftarkan</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO SYNTHESIZER ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'punch') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'special') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+                gainNode.gain.setValueAtTime(0.6, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'bell') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.8);
+                gainNode.gain.setValueAtTime(0.7, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                osc.start(now);
+                osc.stop(now + 0.8);
+            } else if (type === 'win') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.15);
+                osc.frequency.setValueAtTime(783.99, now + 0.3);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            }
+        }
+
+        // --- DATA 31 PETARUNG ---
+        let fighters = [
+            { id: 1, name: "Gilang Ramadhan", alias: "Kapten Nyoli", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19841219/Screenshot_20260924-113748.jpg", altSkins: ["https://www.upload.ee/image/19841219/Screenshot_20260924-113748.jpg", "https://www.upload.ee/image/19844596/secret_gilang.jpeg"], stats: { power: 75, speed: 45, stamina: 50 }, specialMove: "Jab Bikin Modar", wins: 0, ko: 0, losses: 0 },
+            { id: 2, name: "Jaya Memet", alias: "Si Raja AI", weightClass: "Kelas Menengah", photo: "https://www.upload.ee/image/19841289/IMG_20260921_144520_619.jpg", altSkins: ["https://www.upload.ee/image/19841289/IMG_20260921_144520_619.jpg", "https://www.upload.ee/image/19844586/jaya_awakend.jpeg"], stats: { power: 76, speed: 60, stamina: 77 }, specialMove: "Kuda-Kuda Ngawi", wins: 0, ko: 0, losses: 0 },
+            { id: 3, name: "Selwin Abadi", alias: "Titan Tahi Lalat", weightClass: "Kelas Menengah", photo: "https://www.upload.ee/image/19841298/IMG_20260922_132343_642.jpg", altSkins: ["https://www.upload.ee/image/19841298/IMG_20260922_132343_642.jpg"], stats: { power: 67, speed: 78, stamina: 70 }, specialMove: "Pelorotin Sempak", wins: 0, ko: 0, losses: 0 },
+            { id: 4, name: "Patih Yahudi", alias: "Pacar nya SISKA", weightClass: "Kelas Rebahan", photo: "https://www.upload.ee/image/19841311/Screenshot_20260921-125716.jpg", altSkins: ["https://www.upload.ee/image/19841311/Screenshot_20260921-125716.jpg"], stats: { power: 75, speed: 60, stamina: 65 }, specialMove: "Suka Sama Siska", wins: 0, ko: 0, losses: 0 },
+            { id: 5, name: "Dontol Suka Ngocok", alias: "Pacar N", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19843902/IMG-20260922-WA0056.jpg", altSkins: ["https://www.upload.ee/image/19843902/IMG-20260922-WA0056.jpg", "https://www.upload.ee/image/19846580/20261014_174606.png"], stats: { power: 55, speed: 45, stamina: 10 }, specialMove: "Di rodok dari belakang", wins: 0, ko: 0, losses: 0 },
+            { id: 6, name: "SITI MASITO", alias: "BASIS SITO", weightClass: "Kelas Krempeng", photo: "https://www.upload.ee/image/19843990/CamScanner_03-09-2026_12.07.jpg", altSkins: ["https://www.upload.ee/image/19843990/CamScanner_03-09-2026_12.07.jpg"], stats: { power: 50, speed: 75, stamina: 40 }, specialMove: "Yapping Sito", wins: 0, ko: 0, losses: 0 },
+            { id: 7, name: "HAMZAH RUSDI", alias: "KING BOTI", weightClass: "Kelas Gembrot", photo: "https://www.upload.ee/image/19843994/hamzah.png", altSkins: ["https://www.upload.ee/image/19843994/hamzah.png"], stats: { power: 99, speed: 100, stamina: 80 }, specialMove: "Jab Bikin Mimisan", wins: 0, ko: 0, losses: 0 },
+            { id: 8, name: "Saldi BAHENOL", alias: "RAJA SNIPER", weightClass: "Kelas Ringan", photo: "https://www.upload.ee/image/19844000/IMG_20260903_132651_501.jpg", altSkins: ["https://www.upload.ee/image/19844000/IMG_20260903_132651_501.jpg"], stats: { power: 67, speed: 75, stamina: 65 }, specialMove: "Jumpshoot epep", wins: 0, ko: 0, losses: 0 },
+            { id: 9, name: "UTE MASITE", alias: "IKAN TRI", weightClass: "Kelas Krempeng", photo: "https://www.upload.ee/image/19844006/IMG_20260903_132607_442.jpg", altSkins: ["https://www.upload.ee/image/19844006/IMG_20260903_132607_442.jpg"], stats: { power: 60, speed: 75, stamina: 75 }, specialMove: "Tulang Rapuh", wins: 0, ko: 0, losses: 0 },
+            { id: 10, name: "YUDO DAN AZAM", alias: "TWO BROTHER", weightClass: "Kelas ??", photo: "https://www.upload.ee/image/19844017/IMG-20260903-WA0071.jpg", altSkins: ["https://www.upload.ee/image/19844017/IMG-20260903-WA0071.jpg"], stats: { power: 80, speed: 70, stamina: 95 }, specialMove: "A DAY IN MY LIFE", wins: 0, ko: 0, losses: 0 },
+            { id: 11, name: "Timothy Thoriq", alias: "Raja Pesantren", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844500/timoty.jpeg", altSkins: ["https://www.upload.ee/image/19844500/timoty.jpeg"], stats: { power: 92, speed: 27, stamina: 88 }, specialMove: "Gerakan Bitcoin", wins: 0, ko: 0, losses: 0 },
+            { id: 12, name: "Diefkontolodon", alias: "Anak Fahri", weightClass: "Kelas Ringan", photo: "https://www.upload.ee/image/19844471/WhatsApp_Image_2026-10-14_at_14.11.46.jpeg", altSkins: ["https://www.upload.ee/image/19844471/WhatsApp_Image_2026-10-14_at_14.11.46.jpeg"], stats: { power: 75, speed: 70, stamina: 79 }, specialMove: "Jurus Makan", wins: 0, ko: 0, losses: 0 },
+            { id: 13, name: "TB b Q", alias: "TB Banyak Daqi", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844485/WhatsApp_Image_2026-10-14_at_17.09.41.jpeg", altSkins: ["https://www.upload.ee/image/19844485/WhatsApp_Image_2026-10-14_at_17.09.41.jpeg", "https://www.upload.ee/image/19844585/tb_awaken.jpeg"], stats: { power: 72, speed: 28, stamina: 95 }, specialMove: "Cudah Terbang", wins: 0, ko: 0, losses: 0 },
+            { id: 14, name: "Akmal Athoriq", alias: "Si Dongo", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844494/WhatsApp_Image_2026-10-14_at_17.09.42__1_.jpeg", altSkins: ["https://www.upload.ee/image/19844494/WhatsApp_Image_2026-10-14_at_17.09.42__1_.jpeg"], stats: { power: 77, speed: 68, stamina: 80 }, specialMove: "Tendangan Madun", wins: 0, ko: 0, losses: 0 },
+            { id: 15, name: "Zaky Jawi", alias: "Inul Jawi", weightClass: "Kelas Menengah", photo: "https://www.upload.ee/image/19844510/WhatsApp_Image_2026-10-14_at_17.09.42.jpeg", altSkins: ["https://www.upload.ee/image/19844510/WhatsApp_Image_2026-10-14_at_17.09.42.jpeg"], stats: { power: 73, speed: 73, stamina: 74 }, specialMove: "Makan Ayam", wins: 0, ko: 0, losses: 0 },
+            { id: 16, name: "Azril Endutt", alias: "Pendiam", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844579/azril.jpeg", altSkins: ["https://www.upload.ee/image/19844579/azril.jpeg"], stats: { power: 78, speed: 46, stamina: 35 }, specialMove: "PERUT KERAS", wins: 0, ko: 0, losses: 0 },
+            { id: 17, name: "Ilham Cibaduyut", alias: "Jembooy", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844582/ilham.jpeg", altSkins: ["https://www.upload.ee/image/19844582/ilham.jpeg"], stats: { power: 78, speed: 56, stamina: 67 }, specialMove: "Gada", wins: 0, ko: 0, losses: 0 },
+            { id: 18, name: "Aji Santoto", alias: "Jawir", weightClass: "Kelas Berat", photo: "https://www.upload.ee/image/19844584/aji.jpeg", altSkins: ["https://www.upload.ee/image/19844584/aji.jpeg"], stats: { power: 68, speed: 78, stamina: 79 }, specialMove: "Jurus Jawir", wins: 0, ko: 0, losses: 0 },
+            { id: 19, name: "Fahri X Nayarae", alias: "Awekened Lovers", weightClass: "Kelas Couple", photo: "https://www.upload.ee/image/19844529/two_lovers.jpeg", altSkins: ["https://www.upload.ee/image/19844529/two_lovers.jpeg"], stats: { power: 100, speed: 70, stamina: 100 }, specialMove: "Jurus Two Lovers", wins: 0, ko: 0, losses: 0 },
+            { id: 20, name: "Fatih X Siskae", alias: "Awakened Lovers", weightClass: "Kelas Couple", photo: "https://www.upload.ee/image/19844513/super_duper_rare.jpeg", altSkins: ["https://www.upload.ee/image/19844513/super_duper_rare.jpeg", "https://www.upload.ee/image/19844588/fatih_kuat.jpeg"], stats: { power: 90, speed: 86, stamina: 100 }, specialMove: "Jurus Two Lovers", wins: 0, ko: 0, losses: 0 },
+            { id: 21, name: "Tb B Q Awakened", alias: "Awakened V2", weightClass: "Kelas Awakened", photo: "https://www.upload.ee/image/19844585/tb_awaken.jpeg", altSkins: ["https://www.upload.ee/image/19844585/tb_awaken.jpeg"], stats: { power: 84, speed: 96, stamina: 70 }, specialMove: "The Cudah Unity", wins: 0, ko: 0, losses: 0 },
+            { id: 22, name: "Jimmy V2", alias: "Awakened V2", weightClass: "Kelas Awakened", photo: "https://www.upload.ee/image/19844586/jaya_awakend.jpeg", altSkins: ["https://www.upload.ee/image/19844586/jaya_awakend.jpeg"], stats: { power: 90, speed: 89, stamina: 100 }, specialMove: "Jurus Kuda kuda V2 Madara", wins: 0, ko: 0, losses: 0 },
+            { id: 23, name: "Fatih V2", alias: "Pacar Siskae V2", weightClass: "Kelas Awakened", photo: "https://www.upload.ee/image/19844588/fatih_kuat.jpeg", altSkins: ["https://www.upload.ee/image/19844588/fatih_kuat.jpeg"], stats: { power: 88, speed: 68, stamina: 79 }, specialMove: "Otot Kawan Tulang Siska", wins: 0, ko: 0, losses: 0 },
+            { id: 24, name: "Adit X Ronaldo", alias: "ACR7", weightClass: "Kelas Awakened", photo: "https://www.upload.ee/image/19844590/aditxronaldo.jpeg", altSkins: ["https://www.upload.ee/image/19844590/aditxronaldo.jpeg", "https://www.upload.ee/image/19844594/adit_secret.jpeg"], stats: { power: 10, speed: 100, stamina: 150 }, specialMove: "Tendangan Adit X Ronaldo", wins: 0, ko: 0, losses: 0 },
+            { id: 25, name: "Dontol Secret", alias: "Beban V2", weightClass: "Kelas Secret", photo: "https://www.upload.ee/image/19846580/20261014_174606.png", altSkins: ["https://www.upload.ee/image/19846580/20261014_174606.png"], stats: { power: 91, speed: 85, stamina: 100 }, specialMove: "Mode Beban V2", wins: 0, ko: 0, losses: 0 },
+            { id: 26, name: "A*i* Secret", alias: "??", weightClass: "Kelas Secret", photo: "https://www.upload.ee/image/19844594/adit_secret.jpeg", altSkins: ["https://www.upload.ee/image/19844594/adit_secret.jpeg"], stats: { power: 98, speed: 97, stamina: 100 }, specialMove: "Jurus Shadow", wins: 0, ko: 0, losses: 0 },
+            { id: 27, name: "G*la** Secret", alias: "2 Agama", weightClass: "Kelas Secret", photo: "https://www.upload.ee/image/19844596/secret_gilang.jpeg", altSkins: ["https://www.upload.ee/image/19844596/secret_gilang.jpeg"], stats: { power: 99, speed: 92, stamina: 100 }, specialMove: "Jurus Krislam", wins: 30, ko: 20, losses: 0 },
+            { id: 28, name: "R*d** Secret", alias: "??", weightClass: "Kelas Secret", photo: "https://www.upload.ee/image/19844597/secret_ridho.jpeg", altSkins: ["https://www.upload.ee/image/19844597/secret_ridho.jpeg"], stats: { power: 97, speed: 98, stamina: 100 }, specialMove: "Jurus Perut Endut", wins: 0, ko: 0, losses: 0 },
+            { id: 29, name: "Pa*k *i*m*n Secret", alias: "??", weightClass: "Kelas Secret", photo: "https://placehold.co/400x500/181c2b/ff1e43?text=Secret", altSkins: [], stats: { power: 100, speed: 100, stamina: 100 }, specialMove: "Jurus Perut Endut", wins: 0, ko: 0, losses: 0 },
+            { id: 30, name: "Rafi", alias: "PSHILIT", weightClass: "Kelas Rendah", photo: "https://www.upload.ee/image/19846585/Screenshot_20260521-095902.jpg", altSkins: ["https://www.upload.ee/image/19846585/Screenshot_20260521-095902.jpg"], stats: { power: 75, speed: 85, stamina: 60 }, specialMove: "Tendangan Pisang PSHILIT", wins: 0, ko: 0, losses: 0 },
+            { id: 31, name: "4 Brother", alias: "4 Jagoan TKJ", weightClass: "Kelas Brother", photo: "https://www.upload.ee/image/19846584/IMG_20260521_100015_127.webp", altSkins: ["https://www.upload.ee/image/19846584/IMG_20260521_100015_127.webp"], stats: { power: 83, speed: 96, stamina: 120 }, specialMove: "Combo Nyolbar 4 Brother", wins: 0, ko: 0, losses: 0 }
+        ];
+
+        let selectedFighterForEdit = null;
+        let isFighting = false;
+        let t10State = { round1: [], final: { p1: null, p2: null, winner: null } };
+
+        function renderRoster() {
+            const grid = document.getElementById('rosterGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            grid.innerHTML = '';
+
+            const filtered = fighters.filter(f => f.name.toLowerCase().includes(search) || f.alias.toLowerCase().includes(search));
+
+            filtered.forEach(f => {
+                const totalStats = f.stats.power + f.stats.speed + f.stats.stamina;
+                const card = document.createElement('div');
+                card.className = "fighter-card rounded-2xl overflow-hidden p-4 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[11px] font-arcade bg-streetRed/20 text-streetRed border border-streetRed/40 px-2 py-1 rounded">${f.weightClass}</span>
+                            <button onclick="openEditModal(${f.id})" class="bg-slate-900 border border-gray-700 hover:border-yellow-400 text-yellow-400 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 font-bold transition">
+                                <i class="fa-solid fa-shirt"></i> Admin Skin
+                            </button>
+                        </div>
+                        <div class="relative w-full h-52 rounded-xl overflow-hidden bg-slate-950 border border-gray-800 mb-3">
+                            <img src="${f.photo}" onerror="this.src='https://placehold.co/400x500/181c2b/ff1e43?text=Petarung'" class="w-full h-full object-cover">
+                            <span class="absolute bottom-2 right-2 bg-black/70 text-yellow-400 font-arcade text-[10px] px-2 py-0.5 rounded">PWR: ${totalStats}</span>
+                        </div>
+                        <div class="text-center mb-3">
+                            <h3 class="font-teko text-2xl font-bold uppercase text-white leading-tight">${f.name}</h3>
+                            <p class="text-xs text-streetRed font-action">"${f.alias}"</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-2 rounded-xl text-center text-[11px] font-bold border border-gray-800 mb-3">
+                            <div><span class="text-gray-400 block text-[9px]">POWER</span><span class="text-red-400">${f.stats.power}</span></div>
+                            <div><span class="text-gray-400 block text-[9px]">SPEED</span><span class="text-yellow-400">${f.stats.speed}</span></div>
+                            <div><span class="text-gray-400 block text-[9px]">STAMINA</span><span class="text-blue-400">${f.stats.stamina}</span></div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-800/80 pt-2 flex justify-between text-xs text-gray-400 font-teko text-base">
+                        <span>Menang: <b class="text-green-400">${f.wins}</b></span>
+                        <span>KO: <b class="text-streetRed">${f.ko}</b></span>
+                        <span>Kalah: <b class="text-gray-500">${f.losses}</b></span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            document.getElementById('totalFightersCount').innerText = fighters.length;
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            const sorted = [...fighters].sort((a,b) => b.ko - a.ko);
+            sorted.forEach((f, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-gray-800";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="font-arcade text-xs text-gray-400">#${idx + 1}</span>
+                        <img src="${f.photo}" onerror="this.src='https://placehold.co/100x100'" class="w-10 h-10 rounded-lg object-cover">
+                        <div>
+                            <h4 class="font-bold text-white text-sm">${f.name}</h4>
+                            <p class="text-[10px] text-gray-400">${f.weightClass}</p>
+                        </div>
+                    </div>
+                    <span class="font-teko text-xl font-bold text-streetRed">${f.ko} KO</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-streetRed', 'text-white', 'shadow-md'));
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            activeNav.classList.add('bg-streetRed', 'text-white', 'shadow-md');
+            if(tabId === 'arenaTab') { populateArenaSelectors(); updateArenaFighters(); }
+        }
+
+        function populateArenaSelectors() {
+            const s1 = document.getElementById('selectFighter1');
+            const s2 = document.getElementById('selectFighter2');
+            s1.innerHTML = ''; s2.innerHTML = '';
+            fighters.forEach(f => {
+                s1.add(new Option(f.name + " (" + f.alias + ")", f.id));
+                s2.add(new Option(f.name + " (" + f.alias + ")", f.id));
+            });
+            if(fighters.length > 1) s2.selectedIndex = 1;
+        }
+
+        function updateArenaFighters() {
+            const p1 = fighters.find(f => f.id == document.getElementById('selectFighter1').value);
+            const p2 = fighters.find(f => f.id == document.getElementById('selectFighter2').value);
+            if(p1) { document.getElementById('p1Img').src = p1.photo; document.getElementById('p1Name').innerText = p1.name; }
+            if(p2) { document.getElementById('p2Img').src = p2.photo; document.getElementById('p2Name').innerText = p2.name; }
+            document.getElementById('p1HpBar').style.width = '100%';
+            document.getElementById('p1HpText').innerText = '100 HP';
+            document.getElementById('p2HpBar').style.width = '100%';
+            document.getElementById('p2HpText').innerText = '100 HP';
+            document.getElementById('arenaWinnerBanner').classList.add('hidden');
+        }
+
+        function calculateWinner(fA, fB) {
+            const scoreA = fA.stats.power + fA.stats.speed + fA.stats.stamina;
+            const scoreB = fB.stats.power + fB.stats.speed + fB.stats.stamina;
+            
+            // Peluang Awakened 2%
+            const awakenedChance = Math.random();
+            if (scoreA < scoreB && awakenedChance < 0.02) {
+                return { winner: fA, isAwakened: true };
+            } else if (scoreB < scoreA && awakenedChance < 0.02) {
+                return { winner: fB, isAwakened: true };
+            }
+            return { winner: scoreA >= scoreB ? fA : fB, isAwakened: false };
+        }
+
+        function showFloatingDamage(targetId, text, colorClass) {
+            const el = document.getElementById(targetId);
+            el.innerText = text;
+            el.className = `absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg font-bold pointer-events-none z-30 floating-damage ${colorClass}`;
+            setTimeout(() => {
+                el.className = 'absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg font-bold pointer-events-none z-30 opacity-0';
+            }, 800);
+        }
+
+        function closeArenaBanner() {
+            document.getElementById('arenaWinnerBanner').classList.add('hidden');
+        }
+
+        // --- ARENA DUEL DENGAN GETARAN BRUTAL & BANNER PEMENANG ---
+        function startSimulatedFight() {
+            if(isFighting) return;
+            const p1 = fighters.find(f => f.id == document.getElementById('selectFighter1').value);
+            const p2 = fighters.find(f => f.id == document.getElementById('selectFighter2').value);
+            if(p1.id === p2.id) { alert("Pilih dua petarung berbeda!"); return; }
+
+            isFighting = true;
+            document.getElementById('startFightBtn').disabled = true;
+            document.getElementById('arenaWinnerBanner').classList.add('hidden');
+
+            playSound('bell');
+
+            let hp1 = 100, hp2 = 100;
+            const log = document.getElementById('fightLog');
+            log.innerHTML = `<p class="text-yellow-400 font-bold">> BEL RING BERBUNYI! ${p1.name} vs ${p2.name} saling berhadapan di ring!</p>`;
+            
+            const outcome = calculateWinner(p1, p2);
+
+            let fightInterval = setInterval(() => {
+                const isP1Attacking = Math.random() > 0.5;
+                const attacker = isP1Attacking ? p1 : p2;
+                const defender = isP1Attacking ? p2 : p1;
+                const defFrameId = isP1Attacking ? 'p2PhotoFrame' : 'p1PhotoFrame';
+                const floatTextId = isP1Attacking ? 'p2FloatingText' : 'p1FloatingText';
+                const stageEl = document.getElementById('fightStage');
+                
+                // Peluang Special Effect 5%
+                const isSpecialActive = Math.random() < 0.05;
+                let dmg = Math.floor(Math.random() * 12) + 6;
+                let moveName = "Pukulan Hook";
+
+                if(isSpecialActive) {
+                    dmg += 15;
+                    moveName = `JURUS SPESIAL [${attacker.specialMove}]`;
+                    playSound('special');
+                } else {
+                    playSound('punch');
+                }
+
+                // Efek getaran layar brutal pada stage & foto
+                stageEl.classList.add('brutal-shake-animation');
+                const frameEl = document.getElementById(defFrameId);
+                frameEl.classList.add('brutal-shake-animation');
+                setTimeout(() => {
+                    stageEl.classList.remove('brutal-shake-animation');
+                    frameEl.classList.remove('brutal-shake-animation');
+                }, 400);
+
+                showFloatingDamage(floatTextId, `-${dmg} HP`, isSpecialActive ? 'text-yellow-400 scale-125' : 'text-red-500');
+
+                if(attacker.id === outcome.winner.id) {
+                    if(defender.id === p1.id) hp1 = Math.max(0, hp1 - dmg);
+                    else hp2 = Math.max(0, hp2 - dmg);
+                } else {
+                    if(defender.id === p1.id) hp1 = Math.max(0, hp1 - Math.floor(dmg / 2.5));
+                    else hp2 = Math.max(0, hp2 - Math.floor(dmg / 2.5));
+                }
+
+                document.getElementById('p1HpBar').style.width = hp1 + '%';
+                document.getElementById('p1HpText').innerText = hp1 + ' HP';
+                document.getElementById('p2HpBar').style.width = hp2 + '%';
+                document.getElementById('p2HpText').innerText = hp2 + ' HP';
+
+                const logItem = document.createElement('p');
+                if(isSpecialActive) {
+                    logItem.className = "text-yellow-300 font-bold";
+                    logItem.innerText = `🔥 ⚡ SPECIAL EFFECT! ${attacker.name} menghantam ${defender.name} dengan ${moveName}!`;
+                } else {
+                    logItem.innerText = `🥊 ${attacker.name} melancarkan ${moveName}! ${defender.name} terkena damage.`;
+                }
+                log.appendChild(logItem);
+                log.scrollTop = log.scrollHeight;
+
+                if(outcome.isAwakened && (hp1 < 50 || hp2 < 50) && Math.random() < 0.25) {
+                    const awakenedLog = document.createElement('p');
+                    awakenedLog.className = "text-cyan-300 font-bold";
+                    awakenedLog.innerText = `⚡ AWAKENED (2%)! ${outcome.winner.name} membangkitkan kekuatan tersembunyi!`;
+                    log.appendChild(awakenedLog);
+                }
+
+                if(hp1 <= 0 || hp2 <= 0) {
+                    clearInterval(fightInterval);
+                    isFighting = false;
+                    document.getElementById('startFightBtn').disabled = false;
+
+                    playSound('bell');
+                    playSound('win');
+
+                    const winner = hp1 > 0 ? p1 : p2;
+                    const loser = hp1 > 0 ? p2 : p1;
+
+                    winner.wins++;
+                    winner.ko++;
+                    loser.losses++;
+
+                    const endLog = document.createElement('p');
+                    endLog.className = "text-red-500 font-bold text-sm pt-2 uppercase tracking-widest";
+                    endLog.innerText = `🔔 KNOCKOUT! ${winner.name.toUpperCase()} TELAH MEMENANGKAN PERTANDINGAN!`;
+                    log.appendChild(endLog);
+                    log.scrollTop = log.scrollHeight;
+
+                    // Tampilkan Banner Pemenang di Tengah Arena
+                    document.getElementById('bannerWinnerImg').src = winner.photo;
+                    document.getElementById('bannerWinnerName').innerText = winner.name.toUpperCase();
+                    document.getElementById('bannerWinnerDesc').innerText = `"${winner.alias}" TELAH MEMENANGKAN PERTANDINGAN DENGAN TELAK!`;
+                    document.getElementById('arenaWinnerBanner').classList.remove('hidden');
+
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                    renderRoster();
+                }
+            }, 1300);
+        }
+
+        // --- TURNAMEN 10 ORANG ---
+        function generate10PlayerTournament() {
+            const shuffled = [...fighters].sort(() => 0.5 - Math.random()).slice(0, 10);
+            t10State.round1 = [
+                { id: 1, p1: shuffled[0], p2: shuffled[1] },
+                { id: 2, p1: shuffled[2], p2: shuffled[3] },
+                { id: 3, p1: shuffled[4], p2: shuffled[5] },
+                { id: 4, p1: shuffled[6], p2: shuffled[7] },
+                { id: 5, p1: shuffled[8], p2: shuffled[9] }
+            ];
+            t10State.final = { p1: null, p2: null, winner: null };
+            document.getElementById('championBox').classList.add('hidden');
+            renderRound1HTML();
+        }
+
+        function renderRound1HTML() {
+            const container = document.getElementById('round1Container');
+            container.innerHTML = '';
+            t10State.round1.forEach(match => {
+                const res = calculateWinner(match.p1, match.p2);
+                match.winner = res.winner;
+                const isAwakenedText = res.isAwakened ? ` <span class="text-cyan-400 text-[10px]">[Awakened 2%!]</span>` : '';
+
+                const div = document.createElement('div');
+                div.className = "bg-slate-900 p-3 rounded-xl border border-gray-700 space-y-2 text-xs";
+                div.innerHTML = `
+                    <div class="text-gray-400 font-arcade flex justify-between"><span>PENYISIHAN #${match.id}</span></div>
+                    <div class="flex justify-between items-center p-2 rounded ${match.winner.id === match.p1.id ? 'bg-green-950/40 border border-green-500 text-white font-bold' : 'text-gray-400'}">
+                        <span>${match.p1.name} ${match.winner.id === match.p1.id && res.isAwakened ? isAwakenedText : ''}</span>
+                        ${match.winner.id === match.p1.id ? '<i class="fa-solid fa-check text-green-400"></i>' : ''}
+                    </div>
+                    <div class="flex justify-between items-center p-2 rounded ${match.winner.id === match.p2.id ? 'bg-green-950/40 border border-green-500 text-white font-bold' : 'text-gray-400'}">
+                        <span>${match.p2.name} ${match.winner.id === match.p2.id && res.isAwakened ? isAwakenedText : ''}</span>
+                        ${match.winner.id === match.p2.id ? '<i class="fa-solid fa-check text-green-400"></i>' : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            t10State.final.p1 = t10State.round1[0].winner;
+            t10State.final.p2 = t10State.round1[1].winner;
+
+            document.getElementById('grandFinalistsText').innerHTML = `
+                <span class="text-yellow-300 font-bold">${t10State.final.p1.name}</span>
+                <span class="font-action text-2xl text-yellow-400">VS</span>
+                <span class="text-yellow-300 font-bold">${t10State.final.p2.name}</span>
+            `;
+            const btn = document.getElementById('playGrandFinalBtn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function simGrandFinal10() {
+            const f1 = t10State.final.p1;
+            const f2 = t10State.final.p2;
+            const finalRes = calculateWinner(f1, f2);
+            const champ = finalRes.winner;
+            t10State.final.winner = champ;
+            champ.wins += 3; champ.ko += 3;
+            renderRoster();
+
+            playSound('win');
+            confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
+
+            const box = document.getElementById('championBox');
+            box.classList.remove('hidden');
+            document.getElementById('championName').innerText = champ.name.toUpperCase();
+            document.getElementById('championDescText').innerText = `${champ.name.toUpperCase()} TELAH MEMENANGKAN TURNAMEN AKBAR`;
+            document.getElementById('championAlias').innerText = `Julukan: "${champ.alias}" | Jurus: ${champ.specialMove} ${finalRes.isAwakened ? '(AWAKENED 2% COMEBACK!)' : ''}`;
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function openEditModal(id) {
+            selectedFighterForEdit = fighters.find(f => f.id === id);
+            document.getElementById('editModalAvatar').src = selectedFighterForEdit.photo;
+            document.getElementById('editModalName').innerText = selectedFighterForEdit.name;
+            document.getElementById('editModalAlias').innerText = selectedFighterForEdit.alias;
+            document.getElementById('editModalId').innerText = `ID: ${selectedFighterForEdit.id}`;
+            
+            const skinContainer = document.getElementById('adminSkinOptions');
+            skinContainer.innerHTML = '';
+            
+            if(selectedFighterForEdit.altSkins && selectedFighterForEdit.altSkins.length > 0) {
+                selectedFighterForEdit.altSkins.forEach((skinUrl, index) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `px-3 py-1.5 rounded-lg text-xs font-bold border transition ${selectedFighterForEdit.photo === skinUrl ? 'bg-streetRed text-white border-streetRed' : 'bg-slate-800 text-gray-300 border-gray-700 hover:bg-slate-700'}`;
+                    btn.innerHTML = `<i class="fa-solid fa-image mr-1"></i> Skin Opsi ${index + 1}`;
+                    btn.onclick = () => {
+                        selectedFighterForEdit.photo = skinUrl;
+                        document.getElementById('editModalAvatar').src = skinUrl;
+                        renderRoster();
+                        openEditModal(selectedFighterForEdit.id);
+                    };
+                    skinContainer.appendChild(btn);
+                });
+            } else {
+                skinContainer.innerHTML = '<span class="text-xs text-gray-500 italic">Belum ada skin alternatif yang diprogram untuk ID ini.</span>';
+            }
+
+            openModal('editModal');
+        }
+
+        function handleAddNewFighter(e) {
+            e.preventDefault();
+            const newPhoto = document.getElementById('newFighterPhoto').value;
+            fighters.unshift({
+                id: Date.now(),
+                name: document.getElementById('newFighterName').value,
+                alias: document.getElementById('newFighterAlias').value,
+                weightClass: document.getElementById('newFighterClass').value,
+                photo: newPhoto,
+                altSkins: [newPhoto],
+                stats: { 
+                    power: parseInt(document.getElementById('newFighterPower').value) || 85, 
+                    speed: parseInt(document.getElementById('newFighterSpeed').value) || 85, 
+                    stamina: parseInt(document.getElementById('newFighterDefense').value) || 85 
+                },
+                specialMove: document.getElementById('newFighterSpecial').value || "Jurus Khas",
+                wins: 0, ko: 0, losses: 0
+            });
+            renderRoster();
+            closeModal('addFighterModal');
+            document.getElementById('addFighterForm').reset();
+        }
+
+        window.onload = function() { renderRoster(); };
+    </script>
+</body>
+</html>
