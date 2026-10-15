@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKJ I Street Fighter - Underground Boxing League</title>
+    <title>TKJ I Street Fighter - Class Boxing Arena</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Press+Start+2P&family=Teko:wght@600;700&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -58,7 +58,7 @@
         }
 
         .hp-bar-fill {
-            transition: width 0.4s ease-out;
+            transition: width 0.5s ease-out;
         }
 
         .scanlines {
@@ -135,10 +135,10 @@
                     <i class="fa-solid fa-users"></i> List Petarung
                 </button>
                 <button onclick="switchTab('arenaTab')" id="nav-arenaTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fa-solid fa-globe text-cyan-400"></i> Arena Online (VS)
+                    <i class="fa-solid fa-skull-crossbones"></i> Arena Duel (VS)
                 </button>
                 <button onclick="switchTab('bracketTab')" id="nav-bracketTab" class="nav-btn px-4 py-2 rounded-lg font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fa-solid fa-trophy"></i> Turnamen 10 Orang
+                    <i class="fa-solid fa-trophy"></i> Turnamen (10 Orang)
                 </button>
             </nav>
 
@@ -169,106 +169,73 @@
             <div id="rosterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </section>
 
-        <!-- TAB 2: ARENA MULTIPLAYER ONLINE -->
+        <!-- TAB 2: ARENA DUEL (VS MODE) -->
         <section id="arenaTab" class="tab-content hidden space-y-6">
             <div class="text-center space-y-2">
-                <h2 class="font-action text-3xl md:text-5xl text-streetRed tracking-wider uppercase">MULTIPLAYER FIGHT RING</h2>
-                <p class="text-gray-400 text-sm">Adu tarung online real-time dari HP masing-masing via Firebase Realtime Database!</p>
+                <h2 class="font-action text-3xl md:text-5xl text-streetRed tracking-wider uppercase">UNDERGROUND FIGHT RING</h2>
+                <p class="text-gray-400 text-sm">Getaran layar brutal, banner pemenang di tengah ring, Special (5%), & Awakened (2%)!</p>
             </div>
 
-            <!-- MULTIPLAYER LOBBY CONTROLLER -->
-            <div class="bg-streetPanel p-6 rounded-2xl border border-gray-800 max-w-2xl mx-auto space-y-4">
-                <div id="lobbySetup" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-streetRed font-bold text-xs uppercase mb-2">1. Pilih Karakter Kamu</label>
-                            <select id="selectOnlineFighter" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-sm font-bold focus:border-streetRed outline-none"></select>
-                        </div>
-                        <div class="flex flex-col justify-end gap-2">
-                            <button onclick="createOnlineRoom()" class="w-full bg-gradient-to-r from-streetRed to-red-600 hover:brightness-110 text-white font-extrabold p-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg">
-                                <i class="fa-solid fa-plus-circle mr-1"></i> Buat Room
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="relative flex py-2 items-center">
-                        <div class="flex-grow border-t border-gray-800"></div>
-                        <span class="flex-shrink mx-4 text-gray-500 font-arcade text-[10px]">ATAU</span>
-                        <div class="flex-grow border-t border-gray-800"></div>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <input type="text" id="roomCodeInput" placeholder="Masukkan Kode Room 4-Angka..." class="flex-1 bg-slate-900 border border-gray-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-streetGold outline-none uppercase">
-                        <button onclick="joinOnlineRoom()" class="bg-gradient-to-r from-streetGold to-amber-500 text-black font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg">
-                            <i class="fa-solid fa-right-to-bracket mr-1"></i> Gabung Room
-                        </button>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="bg-streetPanel p-4 rounded-2xl border border-streetRed/40">
+                    <label class="block text-streetRed font-bold text-xs uppercase mb-2">Pilih Petarung 1 (Sudut Merah)</label>
+                    <select id="selectFighter1" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-streetRed outline-none"></select>
                 </div>
-
-                <!-- ROOM STATUS DISPLAY -->
-                <div id="roomActiveStatus" class="hidden bg-slate-900 p-4 rounded-xl border border-yellow-500/50 flex items-center justify-between">
-                    <div>
-                        <span class="text-xs text-gray-400 block font-arcade">STATUS ROOM ONLINE:</span>
-                        <h4 class="font-teko text-2xl font-bold text-streetGold">KODE ROOM: <span id="currentRoomCode" class="text-white font-mono tracking-widest">----</span></h4>
-                        <p id="roomRoleText" class="text-xs text-cyan-400 font-bold">Menunggu Lawan...</p>
-                    </div>
-                    <button onclick="leaveOnlineRoom()" class="bg-gray-800 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/30">
-                        <i class="fa-solid fa-door-open mr-1"></i> Keluar
-                    </button>
+                <div class="bg-streetPanel p-4 rounded-2xl border border-amber-500/40">
+                    <label class="block text-amber-400 font-bold text-xs uppercase mb-2">Pilih Petarung 2 (Sudut Biru)</label>
+                    <select id="selectFighter2" onchange="updateArenaFighters()" class="w-full bg-slate-900 border border-gray-700 text-white rounded-xl p-3 text-base font-bold focus:border-amber-400 outline-none"></select>
                 </div>
             </div>
 
-            <!-- FIGHT STAGE REAL-TIME -->
             <div id="fightStage" class="scanlines relative bg-slate-950 border-4 border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl overflow-hidden">
                 
-                <!-- BANNER PEMENANG ONLINE -->
+                <!-- BANNER PENGUMUMAN PEMENANG DI TENGAH STAGE -->
                 <div id="arenaWinnerBanner" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center winner-banner-anim">
                     <div class="w-24 h-24 rounded-2xl overflow-hidden border-4 border-yellow-400 shadow-2xl shadow-yellow-500/50 mb-4">
                         <img id="bannerWinnerImg" src="" class="w-full h-full object-cover">
                     </div>
-                    <span class="text-yellow-400 font-arcade text-xs tracking-widest uppercase mb-1"><i class="fa-solid fa-crown text-streetGold"></i> ONLINE KO VICTORY <i class="fa-solid fa-crown text-streetGold"></i></span>
+                    <span class="text-yellow-400 font-arcade text-xs tracking-widest uppercase mb-1"><i class="fa-solid fa-crown text-streetGold"></i> KNOCKOUT VICTORY <i class="fa-solid fa-crown text-streetGold"></i></span>
                     <h3 id="bannerWinnerName" class="font-action text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-streetRed via-yellow-400 to-amber-500 uppercase tracking-wider mb-2">NAMA PEMENANG</h3>
                     <p id="bannerWinnerDesc" class="text-gray-300 text-xs md:text-sm font-semibold max-w-md italic mb-6">TELAH MEMENANGKAN PERTANDINGAN DENGAN TELAK!</p>
                     <button onclick="closeArenaBanner()" class="bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:scale-105 transition shadow-lg">
-                        Tutup
+                        Lanjut / Tutup Arena
                     </button>
                 </div>
 
                 <div class="flex flex-col md:flex-row justify-between items-center gap-8 relative z-20">
                     
-                    <!-- FIGHTER 1 (HOST) -->
+                    <!-- FIGHTER 1 -->
                     <div id="arenaP1Card" class="w-full md:w-5/12 text-center space-y-3 relative">
                         <div id="p1FloatingText" class="absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg text-red-500 font-bold pointer-events-none z-30 opacity-0"></div>
                         
                         <div id="p1PhotoFrame" class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-streetRed shadow-xl shadow-streetRed/30 transition">
-                            <img id="p1Img" src="https://placehold.co/400x500/181c2b/ff1e43?text=Host" class="w-full h-full object-cover">
-                            <span class="absolute top-2 left-2 bg-streetRed text-white text-xs font-bold px-2 py-1 rounded-md uppercase">Corner RED (P1)</span>
+                            <img id="p1Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 left-2 bg-streetRed text-white text-xs font-bold px-2 py-1 rounded-md uppercase">Corner RED</span>
                         </div>
-                        <h3 id="p1Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P1 Host</h3>
+                        <h3 id="p1Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P1 Name</h3>
                         <div class="w-full bg-gray-900 rounded-full h-6 border border-streetRed overflow-hidden relative">
                             <div id="p1HpBar" class="hp-bar-fill bg-gradient-to-r from-red-600 to-streetRed h-full w-full" style="width: 100%;"></div>
                             <span id="p1HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-white drop-shadow">100 HP</span>
                         </div>
                     </div>
 
-                    <!-- VS & SERANG BUTTON MULTIPLAYER -->
+                    <!-- VS & BUTTON -->
                     <div class="flex flex-col items-center justify-center space-y-4">
                         <div class="font-arcade text-4xl md:text-6xl text-streetGold italic drop-shadow-[0_0_15px_rgba(255,204,0,0.8)] animate-pulse">VS</div>
-                        <button id="onlineAttackBtn" onclick="sendOnlineAttack()" disabled class="bg-gradient-to-r from-streetRed via-amber-500 to-streetGold text-black font-action text-xl md:text-2xl px-8 py-4 rounded-2xl opacity-50 cursor-not-allowed transition shadow-2xl shadow-streetRed/50 active:scale-95 border-2 border-yellow-300 uppercase">
-                            <i class="fa-solid fa-boxing-glove mr-2"></i> SERANG / PUKUL!
+                        <button id="startFightBtn" onclick="startSimulatedFight()" class="bg-gradient-to-r from-streetRed via-amber-500 to-streetGold text-black font-action text-xl md:text-2xl px-8 py-4 rounded-2xl hover:scale-105 transition shadow-2xl shadow-streetRed/50 active:scale-95 border-2 border-yellow-300 uppercase">
+                            <i class="fa-solid fa-boxing-glove mr-2"></i> MULAI BERTARUNG!
                         </button>
-                        <p id="turnNoticeText" class="text-xs text-gray-400 font-arcade">Buat / Gabung Room Terlebih Dahulu</p>
                     </div>
 
-                    <!-- FIGHTER 2 (GUEST) -->
+                    <!-- FIGHTER 2 -->
                     <div id="arenaP2Card" class="w-full md:w-5/12 text-center space-y-3 relative">
                         <div id="p2FloatingText" class="absolute -top-10 left-1/2 -translate-x-1/2 font-arcade text-lg text-red-500 font-bold pointer-events-none z-30 opacity-0"></div>
 
                         <div id="p2PhotoFrame" class="relative w-40 h-40 md:w-52 md:h-52 mx-auto rounded-2xl overflow-hidden border-4 border-amber-400 shadow-xl shadow-amber-500/30 transition">
-                            <img id="p2Img" src="https://placehold.co/400x500/181c2b/ff1e43?text=Guest" class="w-full h-full object-cover">
-                            <span class="absolute top-2 right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1 rounded-md uppercase">Corner BLUE (P2)</span>
+                            <img id="p2Img" src="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1 rounded-md uppercase">Corner BLUE</span>
                         </div>
-                        <h3 id="p2Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P2 Guest</h3>
+                        <h3 id="p2Name" class="font-teko text-3xl font-bold text-white uppercase tracking-wider">P2 Name</h3>
                         <div class="w-full bg-gray-900 rounded-full h-6 border border-amber-400 overflow-hidden relative">
                             <div id="p2HpBar" class="hp-bar-fill bg-gradient-to-r from-amber-500 to-yellow-300 h-full w-full" style="width: 100%;"></div>
                             <span id="p2HpText" class="absolute inset-0 flex items-center justify-center text-xs font-arcade font-bold text-black drop-shadow">100 HP</span>
@@ -277,13 +244,13 @@
 
                 </div>
 
-                <!-- Chat Logs Komentator -->
+                <!-- Chat Logs Komentator di Bawah -->
                 <div class="mt-8 bg-black/80 rounded-2xl p-4 border border-gray-800 text-left">
                     <h4 class="font-arcade text-xs text-yellow-400 uppercase mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-terminal"></i> Ring Fight Live Commentary Log:
+                        <i class="fa-solid fa-terminal"></i> Ring Fight Commentary Log:
                     </h4>
                     <div id="fightLog" class="h-36 overflow-y-auto font-mono text-xs text-green-400 space-y-1 p-2 bg-slate-950 rounded-xl border border-gray-900">
-                        <p class="text-gray-500 italic">> Selamat datang di Arena Online Multiplayer. Buat room atau gabung room untuk bertarung.</p>
+                        <p class="text-gray-500 italic">> Tekan 'MULAI BERTARUNG!' untuk memulai pertandingan.</p>
                     </div>
                 </div>
             </div>
@@ -328,6 +295,7 @@
                             </div>
                         </div>
 
+                        <!-- Surprise Champion Celebration Box & Banner Nama Sesuai List -->
                         <div id="championBox" class="hidden bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 p-6 rounded-2xl text-black text-center shadow-2xl space-y-3 animate-bounce">
                             <div class="font-arcade text-xs uppercase tracking-widest"><i class="fa-solid fa-crown"></i> PENGUMUMAN JUARA TURNAMEN <i class="fa-solid fa-crown"></i></div>
                             <h2 id="championName" class="font-action text-4xl uppercase tracking-wider">NAMA JUARA</h2>
@@ -421,13 +389,13 @@
         </div>
     </div>
 
-    <!-- SCRIPT UTAMA GAME -->
     <script>
         // --- AUDIO SYNTHESIZER ---
-        let audioCtx;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
         function playSound(type) {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
@@ -507,12 +475,8 @@
         ];
 
         let selectedFighterForEdit = null;
+        let isFighting = false;
         let t10State = { round1: [], final: { p1: null, p2: null, winner: null } };
-
-        // --- MULTIPLAYER GLOBAL VARS ---
-        let currentRoomCode = null;
-        let myRole = null;
-        let roomData = null;
 
         function renderRoster() {
             const grid = document.getElementById('rosterGrid');
@@ -587,56 +551,44 @@
             document.getElementById(tabId).classList.remove('hidden');
             const activeNav = document.getElementById(`nav-${tabId}`);
             activeNav.classList.add('bg-streetRed', 'text-white', 'shadow-md');
-            if(tabId === 'arenaTab') { populateOnlineSelectors(); }
+            if(tabId === 'arenaTab') { populateArenaSelectors(); updateArenaFighters(); }
         }
 
-        function populateOnlineSelectors() {
-            const s = document.getElementById('selectOnlineFighter');
-            s.innerHTML = '';
+        function populateArenaSelectors() {
+            const s1 = document.getElementById('selectFighter1');
+            const s2 = document.getElementById('selectFighter2');
+            s1.innerHTML = ''; s2.innerHTML = '';
             fighters.forEach(f => {
-                s.add(new Option(f.name + " (" + f.alias + ")", f.id));
+                s1.add(new Option(f.name + " (" + f.alias + ")", f.id));
+                s2.add(new Option(f.name + " (" + f.alias + ")", f.id));
             });
+            if(fighters.length > 1) s2.selectedIndex = 1;
         }
 
-        function updateOnlineStageUI(data) {
-            if(data.p1) {
-                document.getElementById('p1Img').src = data.p1.photo;
-                document.getElementById('p1Name').innerText = data.p1.name;
-                document.getElementById('p1HpBar').style.width = data.p1.hp + '%';
-                document.getElementById('p1HpText').innerText = data.p1.hp + ' HP';
-            }
-            if(data.p2) {
-                document.getElementById('p2Img').src = data.p2.photo;
-                document.getElementById('p2Name').innerText = data.p2.name;
-                document.getElementById('p2HpBar').style.width = data.p2.hp + '%';
-                document.getElementById('p2HpText').innerText = data.p2.hp + ' HP';
-            }
+        function updateArenaFighters() {
+            const p1 = fighters.find(f => f.id == document.getElementById('selectFighter1').value);
+            const p2 = fighters.find(f => f.id == document.getElementById('selectFighter2').value);
+            if(p1) { document.getElementById('p1Img').src = p1.photo; document.getElementById('p1Name').innerText = p1.name; }
+            if(p2) { document.getElementById('p2Img').src = p2.photo; document.getElementById('p2Name').innerText = p2.name; }
+            document.getElementById('p1HpBar').style.width = '100%';
+            document.getElementById('p1HpText').innerText = '100 HP';
+            document.getElementById('p2HpBar').style.width = '100%';
+            document.getElementById('p2HpText').innerText = '100 HP';
+            document.getElementById('arenaWinnerBanner').classList.add('hidden');
+        }
 
-            const btn = document.getElementById('onlineAttackBtn');
-            const notice = document.getElementById('turnNoticeText');
-
-            if(data.status === 'fighting') {
-                if(data.turn === myRole) {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    notice.innerText = "⚡ GILIRAN KAMU UNTUK MENYERANG!";
-                    notice.className = "text-xs font-arcade text-green-400 animate-pulse";
-                } else {
-                    btn.disabled = true;
-                    btn.classList.add('opacity-50', 'cursor-not-allowed');
-                    notice.innerText = "⏳ Menunggu Serangan Lawan...";
-                    notice.className = "text-xs font-arcade text-yellow-400";
-                }
-            } else if(data.status === 'finished') {
-                btn.disabled = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                notice.innerText = "PERTANDINGAN SELESAI";
+        function calculateWinner(fA, fB) {
+            const scoreA = fA.stats.power + fA.stats.speed + fA.stats.stamina;
+            const scoreB = fB.stats.power + fB.stats.speed + fB.stats.stamina;
+            
+            // Peluang Awakened 2%
+            const awakenedChance = Math.random();
+            if (scoreA < scoreB && awakenedChance < 0.02) {
+                return { winner: fA, isAwakened: true };
+            } else if (scoreB < scoreA && awakenedChance < 0.02) {
+                return { winner: fB, isAwakened: true };
             }
-
-            if(data.log) {
-                const logBox = document.getElementById('fightLog');
-                logBox.innerHTML = `<p class="text-green-400 font-bold font-mono text-xs">> ${data.log}</p>`;
-            }
+            return { winner: scoreA >= scoreB ? fA : fB, isAwakened: false };
         }
 
         function showFloatingDamage(targetId, text, colorClass) {
@@ -652,16 +604,121 @@
             document.getElementById('arenaWinnerBanner').classList.add('hidden');
         }
 
-        // --- TURNAMEN 10 ORANG ---
-        function calculateWinner(fA, fB) {
-            const scoreA = fA.stats.power + fA.stats.speed + fA.stats.stamina;
-            const scoreB = fB.stats.power + fB.stats.speed + fB.stats.stamina;
-            const awakenedChance = Math.random();
-            if (scoreA < scoreB && awakenedChance < 0.02) return { winner: fA, isAwakened: true };
-            else if (scoreB < scoreA && awakenedChance < 0.02) return { winner: fB, isAwakened: true };
-            return { winner: scoreA >= scoreB ? fA : fB, isAwakened: false };
+        // --- ARENA DUEL DENGAN GETARAN BRUTAL & BANNER PEMENANG ---
+        function startSimulatedFight() {
+            if(isFighting) return;
+            const p1 = fighters.find(f => f.id == document.getElementById('selectFighter1').value);
+            const p2 = fighters.find(f => f.id == document.getElementById('selectFighter2').value);
+            if(p1.id === p2.id) { alert("Pilih dua petarung berbeda!"); return; }
+
+            isFighting = true;
+            document.getElementById('startFightBtn').disabled = true;
+            document.getElementById('arenaWinnerBanner').classList.add('hidden');
+
+            playSound('bell');
+
+            let hp1 = 100, hp2 = 100;
+            const log = document.getElementById('fightLog');
+            log.innerHTML = `<p class="text-yellow-400 font-bold">> BEL RING BERBUNYI! ${p1.name} vs ${p2.name} saling berhadapan di ring!</p>`;
+            
+            const outcome = calculateWinner(p1, p2);
+
+            let fightInterval = setInterval(() => {
+                const isP1Attacking = Math.random() > 0.5;
+                const attacker = isP1Attacking ? p1 : p2;
+                const defender = isP1Attacking ? p2 : p1;
+                const defFrameId = isP1Attacking ? 'p2PhotoFrame' : 'p1PhotoFrame';
+                const floatTextId = isP1Attacking ? 'p2FloatingText' : 'p1FloatingText';
+                const stageEl = document.getElementById('fightStage');
+                
+                // Peluang Special Effect 5%
+                const isSpecialActive = Math.random() < 0.05;
+                let dmg = Math.floor(Math.random() * 12) + 6;
+                let moveName = "Pukulan Hook";
+
+                if(isSpecialActive) {
+                    dmg += 15;
+                    moveName = `JURUS SPESIAL [${attacker.specialMove}]`;
+                    playSound('special');
+                } else {
+                    playSound('punch');
+                }
+
+                // Efek getaran layar brutal pada stage & foto
+                stageEl.classList.add('brutal-shake-animation');
+                const frameEl = document.getElementById(defFrameId);
+                frameEl.classList.add('brutal-shake-animation');
+                setTimeout(() => {
+                    stageEl.classList.remove('brutal-shake-animation');
+                    frameEl.classList.remove('brutal-shake-animation');
+                }, 400);
+
+                showFloatingDamage(floatTextId, `-${dmg} HP`, isSpecialActive ? 'text-yellow-400 scale-125' : 'text-red-500');
+
+                if(attacker.id === outcome.winner.id) {
+                    if(defender.id === p1.id) hp1 = Math.max(0, hp1 - dmg);
+                    else hp2 = Math.max(0, hp2 - dmg);
+                } else {
+                    if(defender.id === p1.id) hp1 = Math.max(0, hp1 - Math.floor(dmg / 2.5));
+                    else hp2 = Math.max(0, hp2 - Math.floor(dmg / 2.5));
+                }
+
+                document.getElementById('p1HpBar').style.width = hp1 + '%';
+                document.getElementById('p1HpText').innerText = hp1 + ' HP';
+                document.getElementById('p2HpBar').style.width = hp2 + '%';
+                document.getElementById('p2HpText').innerText = hp2 + ' HP';
+
+                const logItem = document.createElement('p');
+                if(isSpecialActive) {
+                    logItem.className = "text-yellow-300 font-bold";
+                    logItem.innerText = `🔥 ⚡ SPECIAL EFFECT! ${attacker.name} menghantam ${defender.name} dengan ${moveName}!`;
+                } else {
+                    logItem.innerText = `🥊 ${attacker.name} melancarkan ${moveName}! ${defender.name} terkena damage.`;
+                }
+                log.appendChild(logItem);
+                log.scrollTop = log.scrollHeight;
+
+                if(outcome.isAwakened && (hp1 < 50 || hp2 < 50) && Math.random() < 0.25) {
+                    const awakenedLog = document.createElement('p');
+                    awakenedLog.className = "text-cyan-300 font-bold";
+                    awakenedLog.innerText = `⚡ AWAKENED (2%)! ${outcome.winner.name} membangkitkan kekuatan tersembunyi!`;
+                    log.appendChild(awakenedLog);
+                }
+
+                if(hp1 <= 0 || hp2 <= 0) {
+                    clearInterval(fightInterval);
+                    isFighting = false;
+                    document.getElementById('startFightBtn').disabled = false;
+
+                    playSound('bell');
+                    playSound('win');
+
+                    const winner = hp1 > 0 ? p1 : p2;
+                    const loser = hp1 > 0 ? p2 : p1;
+
+                    winner.wins++;
+                    winner.ko++;
+                    loser.losses++;
+
+                    const endLog = document.createElement('p');
+                    endLog.className = "text-red-500 font-bold text-sm pt-2 uppercase tracking-widest";
+                    endLog.innerText = `🔔 KNOCKOUT! ${winner.name.toUpperCase()} TELAH MEMENANGKAN PERTANDINGAN!`;
+                    log.appendChild(endLog);
+                    log.scrollTop = log.scrollHeight;
+
+                    // Tampilkan Banner Pemenang di Tengah Arena
+                    document.getElementById('bannerWinnerImg').src = winner.photo;
+                    document.getElementById('bannerWinnerName').innerText = winner.name.toUpperCase();
+                    document.getElementById('bannerWinnerDesc').innerText = `"${winner.alias}" TELAH MEMENANGKAN PERTANDINGAN DENGAN TELAK!`;
+                    document.getElementById('arenaWinnerBanner').classList.remove('hidden');
+
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                    renderRoster();
+                }
+            }, 1300);
         }
 
+        // --- TURNAMEN 10 ORANG ---
         function generate10PlayerTournament() {
             const shuffled = [...fighters].sort(() => 0.5 - Math.random()).slice(0, 10);
             t10State.round1 = [
@@ -791,164 +848,6 @@
         }
 
         window.onload = function() { renderRoster(); };
-    </script>
-
-    <!-- FIREBASE MODULE SDK & LOGIC HUBUNGAN KE WINDOW -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDVk_VQ8VqYQ0ZWudKsSI-BSV8g42vVD4U",
-            authDomain: "tkj-fighter.firebaseapp.com",
-            projectId: "tkj-fighter",
-            storageBucket: "tkj-fighter.firebasestorage.app",
-            messagingSenderId: "692088312308",
-            appId: "1:692088312308:web:53b3cfb01eff84f257e9a1",
-            measurementId: "G-RZ8P4H4Q1B",
-            databaseURL: "https://tkj-fighter-default-rtdb.firebaseio.com"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // Ekspor fungsi ke global scope
-        window.createOnlineRoom = function() {
-            const fId = document.getElementById('selectOnlineFighter').value;
-            const p1Obj = fighters.find(f => f.id == fId);
-            if(!p1Obj) { alert("Pilih karakter dulu!"); return; }
-
-            const code = Math.floor(1000 + Math.random() * 9000).toString();
-            currentRoomCode = code;
-            myRole = 'p1';
-
-            const roomRef = ref(db, 'rooms/' + code);
-            const initialData = {
-                p1: { ...p1Obj, hp: 100 },
-                p2: null,
-                turn: 'p1',
-                status: 'waiting',
-                log: `Room ${code} dibuat oleh Host (${p1Obj.name}). Menunggu lawan...`
-            };
-
-            set(roomRef, initialData).then(() => {
-                listenToRoom(code);
-                document.getElementById('lobbySetup').classList.add('hidden');
-                document.getElementById('roomActiveStatus').classList.remove('hidden');
-                document.getElementById('currentRoomCode').innerText = code;
-                document.getElementById('roomRoleText').innerText = "Kamu bertindak sebagai HOST (P1)";
-            }).catch(err => {
-                alert("Gagal konek Firebase: " + err.message + "\n\nPastikan Rules Realtime Database diset ke read: true, write: true.");
-            });
-        };
-
-        window.joinOnlineRoom = function() {
-            const code = document.getElementById('roomCodeInput').value.trim();
-            if(!code) { alert("Masukkan kode room!"); return; }
-
-            const fId = document.getElementById('selectOnlineFighter').value;
-            const p2Obj = fighters.find(f => f.id == fId);
-
-            const roomRef = ref(db, 'rooms/' + code);
-            
-            onValue(roomRef, (snapshot) => {
-                const val = snapshot.val();
-                if(val && val.status === 'waiting' && myRole !== 'p1') {
-                    currentRoomCode = code;
-                    myRole = 'p2';
-
-                    update(roomRef, {
-                        p2: { ...p2Obj, hp: 100 },
-                        status: 'fighting',
-                        log: `BEL RING BERBUNYI! ${val.p1.name} vs ${p2Obj.name} bertarung!`
-                    }).then(() => {
-                        document.getElementById('lobbySetup').classList.add('hidden');
-                        document.getElementById('roomActiveStatus').classList.remove('hidden');
-                        document.getElementById('currentRoomCode').innerText = code;
-                        document.getElementById('roomRoleText').innerText = "Kamu bertindak sebagai GUEST (P2)";
-                    });
-                }
-            }, { onlyOnce: true });
-
-            listenToRoom(code);
-        };
-
-        window.sendOnlineAttack = function() {
-            if(!currentRoomCode || !roomData || roomData.status !== 'fighting') return;
-            if(roomData.turn !== myRole) return;
-
-            const isP1 = myRole === 'p1';
-            const attacker = isP1 ? roomData.p1 : roomData.p2;
-            const defender = isP1 ? roomData.p2 : roomData.p1;
-            const defKey = isP1 ? 'p2' : 'p1';
-
-            const isSpecial = Math.random() < 0.05;
-            let dmg = Math.floor(Math.random() * 12) + 8;
-            let moveName = "Pukulan Hook";
-
-            if(isSpecial) {
-                dmg += 15;
-                moveName = `JURUS SPESIAL [${attacker.specialMove}]`;
-                playSound('special');
-            } else {
-                playSound('punch');
-            }
-
-            const newDefHp = Math.max(0, defender.hp - dmg);
-            const nextTurn = isP1 ? 'p2' : 'p1';
-
-            const stageEl = document.getElementById('fightStage');
-            stageEl.classList.add('brutal-shake-animation');
-            setTimeout(() => stageEl.classList.remove('brutal-shake-animation'), 400);
-
-            const floatTarget = isP1 ? 'p2FloatingText' : 'p1FloatingText';
-            showFloatingDamage(floatTarget, `-${dmg} HP`, isSpecial ? 'text-yellow-400' : 'text-red-500');
-
-            let newStatus = 'fighting';
-            let newLog = `${attacker.name} melancarkan ${moveName}! ${defender.name} terkena -${dmg} HP.`;
-
-            if(newDefHp <= 0) {
-                newStatus = 'finished';
-                newLog = `🔔 KNOCKOUT! ${attacker.name.toUpperCase()} MEMENANGKAN PERTANDINGAN!`;
-                playSound('win');
-                
-                document.getElementById('bannerWinnerImg').src = attacker.photo;
-                document.getElementById('bannerWinnerName').innerText = attacker.name.toUpperCase();
-                document.getElementById('bannerWinnerDesc').innerText = `"${attacker.alias}" MEMENANGKAN PERTANDINGAN!`;
-                document.getElementById('arenaWinnerBanner').classList.remove('hidden');
-                confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
-            }
-
-            const roomRef = ref(db, 'rooms/' + currentRoomCode);
-            update(roomRef, {
-                [`${defKey}/hp`]: newDefHp,
-                turn: nextTurn,
-                status: newStatus,
-                log: newLog
-            });
-        };
-
-        window.leaveOnlineRoom = function() {
-            if(currentRoomCode) {
-                const roomRef = ref(db, 'rooms/' + currentRoomCode);
-                remove(roomRef);
-            }
-            currentRoomCode = null;
-            myRole = null;
-            document.getElementById('lobbySetup').classList.remove('hidden');
-            document.getElementById('roomActiveStatus').classList.add('hidden');
-            document.getElementById('arenaWinnerBanner').classList.add('hidden');
-        };
-
-        function listenToRoom(code) {
-            const roomRef = ref(db, 'rooms/' + code);
-            onValue(roomRef, (snapshot) => {
-                const data = snapshot.val();
-                if(!data) return;
-                roomData = data;
-                updateOnlineStageUI(data);
-            });
-        }
     </script>
 </body>
 </html>
